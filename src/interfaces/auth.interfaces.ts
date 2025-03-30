@@ -62,4 +62,6 @@ export interface Auth0Profile {
   iat?: number;
   iss?: string;
   nonce?: string;
+
+  [key: string]: any;
 }

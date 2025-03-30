@@ -1,50 +1,12 @@
 import { Repository } from "typeorm";
 import { User } from "../entities/User";
 import { compare } from "bcryptjs";
-import { sign, verify, JwtPayload, SignOptions } from "jsonwebtoken";
+import { sign, verify, SignOptions } from "jsonwebtoken";
 import AppDataSource from "../config/db";
 import { randomBytes, createHash } from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import { redisClient } from "../config/redisConfig";
-
-interface UserRegistrationData {
-  name: string;
-  email: string;
-  password: string;
-}
-
-interface UserResponse {
-  id: number;
-  name: string;
-  email: string;
-  role: string;
-  isEmailVerified: boolean;
-  isWalletVerified: boolean;
-  createdAt: Date;
-  updatedAt: Date;
-  twoFactorAuth?: {
-    isEnabled: boolean;
-  };
-}
-
-interface TokenResponse {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
-}
-
-interface LoginResponse {
-  user: UserResponse;
-  tokens: TokenResponse;
-}
-
-interface JWTPayload {
-  id: number;
-  email: string;
-  jti?: string;
-  iat?: number;
-  exp?: number;
-}
+import { Auth0Profile, JWTPayload, LoginResponse, TokenResponse, UserRegistrationData, UserResponse } from "../interfaces/auth.interfaces";
 
 export class AuthService {
   private userRepository: Repository<User>;
@@ -56,8 +18,7 @@ export class AuthService {
   constructor() {
     this.userRepository = AppDataSource.getRepository(User);
     this.JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-    this.JWT_REFRESH_SECRET =
-      process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
+    this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
   }
 
   private generateTokenId(): string {
@@ -72,16 +33,10 @@ export class AuthService {
     const jti = this.generateTokenId();
     const expiresIn = 15 * 60;
 
-    const accessTokenOptions: SignOptions = {
-      expiresIn: this.ACCESS_TOKEN_EXPIRY,
-    };
-
-    const refreshTokenOptions: SignOptions = {
-      expiresIn: this.REFRESH_TOKEN_EXPIRY,
-    };
+    const accessTokenOptions: SignOptions = { expiresIn: this.ACCESS_TOKEN_EXPIRY };
+    const refreshTokenOptions: SignOptions = { expiresIn: this.REFRESH_TOKEN_EXPIRY };
 
     const accessToken = sign({ id: userId, email, jti }, this.JWT_SECRET, accessTokenOptions);
-
     const refreshToken = sign({ id: userId, email, jti }, this.JWT_REFRESH_SECRET, refreshTokenOptions);
 
     return { accessToken, refreshToken, expiresIn };
@@ -120,7 +75,7 @@ export class AuthService {
     };
   }
 
-  async findOrCreateAuth0User(auth0Profile: any): Promise<User> {
+  async findOrCreateAuth0User(auth0Profile: Auth0Profile): Promise<User> {
     let user = await this.userRepository.findOne({ where: { email: auth0Profile.email } });
 
     if (!user) {
@@ -167,7 +122,7 @@ export class AuthService {
     };
   }
 
-  async loginWithAuth0(auth0Profile: any): Promise<LoginResponse> {
+  async loginWithAuth0(auth0Profile: Auth0Profile): Promise<LoginResponse> {
     const user = await this.findOrCreateAuth0User(auth0Profile);
 
     const tokens = this.generateTokens(user.id, user.email);

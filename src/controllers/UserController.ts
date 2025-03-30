@@ -4,7 +4,6 @@ import { CreateUserDTO } from "../dtos/CreateUserDTO";
 import { UpdateUserDTO } from "../dtos/UpdateUserDTO";
 import { redisClient } from "../config/redisConfig";
 import { cacheMiddleware } from "../middlewares/cacheMiddleware";
-import { User } from "src/entities/User";
 
 export class UserController {
   private userService: UserService;
@@ -17,17 +16,14 @@ export class UserController {
     try {
       const userData: CreateUserDTO = req.body;
 
-      const newUser: User = await this.userService.createUser(userData);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const newUser = await this.userService.createUser(userData);
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userWithoutPassword } = newUser;
 
       const _cacheKey = `user:${newUser.id}`;
-      await redisClient.setEx(
-        _cacheKey,
-        600,
-        JSON.stringify(userWithoutPassword),
-      );
+      await redisClient.setEx(_cacheKey, 600, JSON.stringify(userWithoutPassword));
 
       res.status(201).json(userWithoutPassword);
     } catch (error) {
@@ -57,11 +53,7 @@ export class UserController {
         const { password, ...userWithoutPassword } = user;
 
         if (res.locals.cacheKey) {
-          await redisClient.setEx(
-            res.locals.cacheKey,
-            600,
-            JSON.stringify(userWithoutPassword),
-          );
+          await redisClient.setEx(res.locals.cacheKey, 600, JSON.stringify(userWithoutPassword));
         }
 
         res.status(200).json(userWithoutPassword);
@@ -88,11 +80,7 @@ export class UserController {
         }
 
         if (res.locals.cacheKey) {
-          await redisClient.setEx(
-            res.locals.cacheKey,
-            600,
-            JSON.stringify(users),
-          );
+          await redisClient.setEx(res.locals.cacheKey, 600, JSON.stringify(users));
         }
 
         res.status(200).json(users);
@@ -112,11 +100,7 @@ export class UserController {
       const { password, ...userWithoutPassword } = updatedUser;
 
       const _cacheKey = `user:${userId}`;
-      await redisClient.setEx(
-        _cacheKey,
-        600,
-        JSON.stringify(userWithoutPassword),
-      );
+      await redisClient.setEx(_cacheKey, 600, JSON.stringify(userWithoutPassword));
 
       res.status(200).json(userWithoutPassword);
     } catch (error) {
