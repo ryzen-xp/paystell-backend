@@ -1,4 +1,3 @@
-// File: src/routes/authRoutes.ts
 import {
   Router,
   Request,
@@ -19,8 +18,7 @@ import {
   refreshTokenMiddleware,
 } from "../middlewares/authMiddleware";
 import { UserRole } from "../enums/UserRole";
-import cookieParser from "cookie-parser";
-import { auth, requiresAuth } from "express-openid-connect";
+import { auth } from "express-openid-connect";
 import { oauthConfig } from "../config/auth0Config";
 
 // Define CustomRequest interface for proper typing of req.user
