@@ -1,3 +1,4 @@
+// File: src/routes/authRoutes.ts
 import {
   Router,
   Request,
@@ -18,6 +19,9 @@ import {
   refreshTokenMiddleware,
 } from "../middlewares/authMiddleware";
 import { UserRole } from "../enums/UserRole";
+import cookieParser from "cookie-parser";
+import { auth, requiresAuth } from "express-openid-connect";
+import { oauthConfig } from "../config/auth0Config";
 
 // Define CustomRequest interface for proper typing of req.user
 interface CustomRequest extends Request {
@@ -33,19 +37,8 @@ interface CustomRequest extends Request {
 const router = Router();
 const authController = new AuthController();
 
-// Error handling middleware
-const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
-  console.error("Auth route error:", err);
-  res.status(500).json({
-    error: "Internal Server Error",
-    message:
-      process.env.NODE_ENV === "development"
-        ? err.message
-        : "Something went wrong",
-  });
-};
-
-router.use(errorHandler);
+// Auth0 authentication routes
+router.use(auth(oauthConfig));
 
 // Validation schemas
 const registerSchema = {
@@ -111,6 +104,14 @@ router.post(
   }),
 );
 
+// Auth0 callback route
+router.get(
+  "/callback",
+  asyncHandler(async (req, res) => {
+    await authController.auth0Callback(req, res);
+  }),
+);
+
 // Route for refresh token
 router.post(
   "/refresh-token",
@@ -172,5 +173,19 @@ router.post(
     res.json(result);
   }),
 );
+
+// Error handling middleware (opcional, si quieres manejar errores aquí)
+const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
+  console.error("Auth route error:", err);
+  res.status(500).json({
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Something went wrong",
+  });
+};
+
+router.use(errorHandler);
 
 export default router;

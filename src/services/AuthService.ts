@@ -1,53 +1,84 @@
+// File: src/services/AuthService.ts
 import { Repository } from "typeorm";
 import { User } from "../entities/User";
 import { compare } from "bcryptjs";
-import { sign, verify, JwtPayload, SignOptions } from "jsonwebtoken";
+import { sign, verify } from "jsonwebtoken";
 import AppDataSource from "../config/db";
 import { randomBytes, createHash } from "crypto";
 import { v4 as uuidv4 } from "uuid";
 import { redisClient } from "../config/redisConfig";
-import {
-  Auth0Profile,
-  JWTPayload,
-  LoginResponse,
-  TokenResponse,
-  UserRegistrationData,
-  UserResponse,
-} from "src/interfaces/auth.interfaces";
+
+interface UserRegistrationData {
+  name: string; // user name
+  email: string; // user email
+  password: string; // user password
+}
+
+interface UserResponse {
+  id: number; // user id
+  name: string; // user name
+  email: string; // user email
+  role: string; // user role
+  isEmailVerified: boolean; // email verification status
+  isWalletVerified: boolean; // wallet verification status
+  createdAt: Date; // creation date
+  updatedAt: Date; // last update date
+  twoFactorAuth?: {
+    isEnabled: boolean; // whether 2FA is enabled
+  };
+}
+
+interface TokenResponse {
+  accessToken: string; // access token
+  refreshToken: string; // refresh token
+  expiresIn: number; // expiry time in seconds
+}
+
+interface LoginResponse {
+  user: UserResponse; // user info
+  tokens: TokenResponse; // access and refresh tokens
+}
+
+interface JWTPayload {
+  id: number; // user id
+  email: string; // user email
+  jti?: string; // JWT token id to identify token
+  iat?: number; // issued at timestamp
+  exp?: number; // expiration timestamp
+}
 
 export class AuthService {
   private userRepository: Repository<User>;
   private readonly JWT_SECRET: string;
   private readonly JWT_REFRESH_SECRET: string;
-  private readonly ACCESS_TOKEN_EXPIRY = "15m"; // 15 minutes
-  private readonly REFRESH_TOKEN_EXPIRY = "7d"; // 7 days
+  private readonly ACCESS_TOKEN_EXPIRY: string = "15m"; // 15 minutes
+  private readonly REFRESH_TOKEN_EXPIRY: string = "7d"; // 7 days
 
   constructor() {
     this.userRepository = AppDataSource.getRepository(User);
-    this.JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
+    this.JWT_SECRET = process.env.JWT_SECRET || "your-secret-key"; // JWT secret key
     this.JWT_REFRESH_SECRET =
-      process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
+      process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key"; // refresh token secret
   }
 
   private generateTokenId(): string {
-    return uuidv4();
+    return uuidv4(); // generate unique token id
   }
 
   private hashToken(token: string): string {
-    return createHash("sha256").update(token).digest("hex");
+    return createHash("sha256").update(token).digest("hex"); // hash token with SHA-256
   }
 
   private generateTokens(userId: number, email: string): TokenResponse {
     const jti = this.generateTokenId();
 
-    // Calculate expires in seconds for client-side expiry handling
     const expiresIn = 15 * 60; // 15 minutes in seconds
 
-    const accessTokenOptions: SignOptions = {
+    const accessTokenOptions: any = {
       expiresIn: this.ACCESS_TOKEN_EXPIRY,
     };
 
-    const refreshTokenOptions: SignOptions = {
+    const refreshTokenOptions: any = {
       expiresIn: this.REFRESH_TOKEN_EXPIRY,
     };
 
@@ -73,35 +104,34 @@ export class AuthService {
   ): Promise<void> {
     const tokenHash = this.hashToken(refreshToken);
 
-    // Store the hashed token in Redis with expiration (7 days)
-    // Key format: refresh_token:{userId}:{jti}
+    // Store hashed refresh token in Redis with 7 days expiry
     await redisClient.set(
       `refresh_token:${userId}:${jti}`,
       tokenHash,
-      { EX: 7 * 24 * 60 * 60 }, // 7 days in seconds
+      { EX: 7 * 24 * 60 * 60 },
     );
   }
 
   private async blacklistToken(jti: string, expiresIn: number): Promise<void> {
-    // Store in Redis blacklist until the token expires
+    // Add token to blacklist in Redis until it expires
     await redisClient.set(`blacklist:${jti}`, "revoked", { EX: expiresIn });
   }
 
   private async isTokenBlacklisted(jti: string): Promise<boolean> {
     const result = await redisClient.get(`blacklist:${jti}`);
-    return result === "revoked";
+    return result === "revoked"; // check if token is blacklisted
   }
 
   async register(userData: UserRegistrationData): Promise<UserResponse> {
     try {
-      console.log("Starting user registration process");
+      console.log("Starting user registration");
 
       const userExists = await this.userRepository.findOne({
         where: { email: userData.email },
       });
 
       if (userExists) {
-        console.log("User already exists with email:", userData.email);
+        console.log("User already exists with this email:", userData.email);
         throw new Error("User with this email already exists");
       }
 
@@ -124,12 +154,12 @@ export class AuthService {
         updatedAt: savedUser.updatedAt,
       };
     } catch (error) {
-      console.error("Error during user registration:", error);
+      console.error("Error during registration:", error);
       throw error;
     }
   }
 
-  async findOrCreateAuth0User(auth0Profile: Auth0Profile): Promise<User> {
+  async findOrCreateAuth0User(auth0Profile: any): Promise<User> {
     // First try to find user by email
     let user = await this.userRepository.findOne({
       where: { email: auth0Profile.email },
@@ -143,8 +173,8 @@ export class AuthService {
           auth0Profile.name ||
           `${auth0Profile.given_name || ""} ${auth0Profile.family_name || ""}`.trim() ||
           auth0Profile.nickname ||
-          auth0Profile.email.split("@")[0], // Use first and last names if available
-        password: randomBytes(32).toString("hex"), // Generate a secure random password as Auth0 handles authentication
+          auth0Profile.email.split("@")[0], // use name and surname if exist
+        password: randomBytes(32).toString("hex"), // generate random password (Auth0 handles auth)
         isEmailVerified: true, // Auth0 verifies emails
       });
 
@@ -196,7 +226,7 @@ export class AuthService {
     };
   }
 
-  async loginWithAuth0(auth0Profile: Auth0Profile): Promise<LoginResponse> {
+  async loginWithAuth0(auth0Profile: any): Promise<LoginResponse> {
     const user = await this.findOrCreateAuth0User(auth0Profile);
 
     const tokens = this.generateTokens(user.id, user.email);
@@ -228,7 +258,7 @@ export class AuthService {
 
   async refresh(refreshToken: string): Promise<TokenResponse> {
     try {
-      // Verify the refresh token
+      // Verify refresh token
       const decoded = verify(
         refreshToken,
         this.JWT_REFRESH_SECRET,
@@ -243,7 +273,7 @@ export class AuthService {
         throw new Error("Token has been revoked");
       }
 
-      // Find the user
+      // Find user
       const user = await this.userRepository.findOne({
         where: { id: decoded.id },
       });
@@ -262,60 +292,33 @@ export class AuthService {
         throw new Error("Invalid refresh token");
       }
 
-      // Delete the old refresh token (one-time use)
+      // Delete old token (single use)
       await redisClient.del(`refresh_token:${decoded.id}:${decoded.jti}`);
 
-      // Blacklist the old jwt ID
-      const tokenExp = decoded.exp || 0;
-      const currentTime = Math.floor(Date.now() / 1000);
-      const remainingTime = Math.max(0, tokenExp - currentTime);
-      await this.blacklistToken(decoded.jti, remainingTime);
+      // Mark token as revoked
+      if (decoded.exp && decoded.iat) {
+        const expiresIn = decoded.exp - decoded.iat;
+        await this.blacklistToken(decoded.jti, expiresIn);
+      }
 
       // Generate new tokens
-      const tokens = this.generateTokens(user.id, user.email);
+      const newTokens = this.generateTokens(user.id, user.email);
 
       // Store new refresh token
       const newDecoded = verify(
-        tokens.refreshToken,
+        newTokens.refreshToken,
         this.JWT_REFRESH_SECRET,
       ) as JWTPayload;
-      await this.storeRefreshToken(
-        user.id,
-        newDecoded.jti!,
-        tokens.refreshToken,
-      );
 
-      return tokens;
+      await this.storeRefreshToken(user.id, newDecoded.jti!, newTokens.refreshToken);
+
+      return newTokens;
     } catch (error) {
-      console.error("Token refresh error:", error);
-      throw new Error("Invalid refresh token");
+      throw new Error("Error refreshing token: " + (error as Error).message);
     }
   }
 
-  async getUserById(id: number): Promise<UserResponse | null> {
-    const user = await this.userRepository.findOne({
-      where: { id },
-      relations: ["twoFactorAuth"],
-    });
-
-    if (!user) return null;
-
-    return {
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      isEmailVerified: user.isEmailVerified,
-      isWalletVerified: user.isWalletVerified,
-      createdAt: user.createdAt,
-      updatedAt: user.updatedAt,
-      twoFactorAuth: user.twoFactorAuth
-        ? { isEnabled: user.twoFactorAuth.isEnabled }
-        : undefined,
-    };
-  }
-
-  async invalidateRefreshToken(refreshToken: string): Promise<void> {
+  async logout(refreshToken: string): Promise<void> {
     try {
       const decoded = verify(
         refreshToken,
@@ -323,62 +326,19 @@ export class AuthService {
       ) as JWTPayload;
 
       if (!decoded.jti) {
-        return; // Invalid token, nothing to do
+        throw new Error("Invalid token format");
       }
 
-      // Remove from active tokens
+      // Delete refresh token from Redis
       await redisClient.del(`refresh_token:${decoded.id}:${decoded.jti}`);
 
-      // Add to blacklist until expiration
-      const tokenExp = decoded.exp || 0;
-      const currentTime = Math.floor(Date.now() / 1000);
-      const remainingTime = Math.max(0, tokenExp - currentTime);
-      console.log(decoded.jti, " 4444");
-      console.log(remainingTime, " cvvcc");
-      await this.blacklistToken(decoded.jti, remainingTime);
-    } catch (error) {
-      // Token is invalid, nothing to do
-      console.error("Error in logout:", error);
-    }
-  }
-
-  async invalidateAccessToken(accessToken: string): Promise<void> {
-    // Blacklist the access token until it expires
-    try {
-      const decoded = verify(
-        accessToken,
-        process.env.JWT_SECRET || "your-secret-key",
-      ) as JwtPayload;
-
-      if (decoded.jti) {
-        // Calculate remaining time until token expiration
-        const currentTime = Math.floor(Date.now() / 1000);
-        const expiryTime = decoded.exp || currentTime;
-        const remainingTime = Math.max(0, expiryTime - currentTime);
-
-        // Add to blacklist for the remaining lifetime of the token
-        await this.blacklistToken(decoded.jti, remainingTime);
+      // Add token to blacklist so it can't be used anymore
+      if (decoded.exp && decoded.iat) {
+        const expiresIn = decoded.exp - decoded.iat;
+        await this.blacklistToken(decoded.jti, expiresIn);
       }
     } catch (error) {
-      // Token is invalid or already expired, nothing to do
-      console.log("Error invalidating access token:", error);
-    }
-  }
-
-  async revokeAllUserSessions(userId: number): Promise<void> {
-    // Get all refresh tokens for this user
-    const tokenKeys = await redisClient.keys(`refresh_token:${userId}:*`);
-
-    // For each token, add jti to blacklist and remove from active tokens
-    for (const key of tokenKeys) {
-      // Extract jti from key (refresh_token:userId:jti)
-      const jti = key.split(":")[2];
-
-      // Add to blacklist (1 week to be safe)
-      await this.blacklistToken(jti, 7 * 24 * 60 * 60);
-
-      // Remove from active tokens
-      await redisClient.del(key);
+      throw new Error("Error logging out: " + (error as Error).message);
     }
   }
 }
