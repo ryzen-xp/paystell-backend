@@ -63,6 +63,7 @@ export const authMiddleware = async (
       return;
     }
 
+    // Check if token is blacklisted
     const isBlacklisted = await redisClient.get(`blacklist:${decoded.jti}`);
     if (isBlacklisted) {
       res.status(401).json({
@@ -128,11 +129,13 @@ export const refreshTokenMiddleware = async (
       return;
     }
 
+    // Verify the refresh token
     const decoded = verify(
       refreshToken,
       process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key",
     ) as JwtPayload;
 
+    // Check if token has jti
     if (!decoded.jti) {
       res.status(401).json({
         status: "error",
@@ -142,6 +145,7 @@ export const refreshTokenMiddleware = async (
       return;
     }
 
+    // Check if token is blacklisted
     const isBlacklisted = await redisClient.get(`blacklist:${decoded.jti}`);
     if (isBlacklisted) {
       res.status(401).json({
@@ -150,6 +154,7 @@ export const refreshTokenMiddleware = async (
         code: "TOKEN_REVOKED",
       });
 
+      // Clear the invalid cookie
       res.clearCookie("refreshToken", {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
@@ -160,6 +165,7 @@ export const refreshTokenMiddleware = async (
       return;
     }
 
+    // Add user info to request
     req.user = {
       id: decoded.id,
       email: decoded.email,
