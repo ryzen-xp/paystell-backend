@@ -4,6 +4,7 @@ import { CreateUserDTO } from "../dtos/CreateUserDTO";
 import { UpdateUserDTO } from "../dtos/UpdateUserDTO";
 import { redisClient } from "../config/redisConfig";
 import { cacheMiddleware } from "../middlewares/cacheMiddleware";
+import { User } from "src/entities/User";
 
 export class UserController {
   private userService: UserService;
@@ -17,7 +18,7 @@ export class UserController {
       const userData: CreateUserDTO = req.body;
 
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const newUser = await this.userService.createUser(userData);
+      const newUser: User = await this.userService.createUser(userData);
 
       // eslint-disable-next-line @typescript-eslint/no-unused-vars
       const { password, ...userWithoutPassword } = newUser;
