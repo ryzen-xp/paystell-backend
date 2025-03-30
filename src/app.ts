@@ -30,6 +30,8 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 import RateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
 import logger from "./utils/logger";
+import { oauthConfig } from "./config/auth0Config";
+import { auth } from "express-openid-connect";
 
 // Initialize express app
 const app = express();
@@ -42,7 +44,7 @@ app.use(morgan("dev"));
 // CORS configuration
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://localhost:3001'],  // Add your frontend URLs
+    origin: ["http://localhost:3000", "http://localhost:3001"], // Add your frontend URLs
     credentials: true,
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
     allowedHeaders: [
@@ -79,6 +81,8 @@ startExpiredSessionCleanupCronJobs();
 
 // Log application startup
 logger.info("Application started successfully");
+
+app.use(auth(oauthConfig));
 
 // Define routes
 app.use("/health", healthRouter);
