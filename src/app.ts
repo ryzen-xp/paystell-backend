@@ -1,3 +1,4 @@
+import cookieParser from "cookie-parser";
 import express, {
   Request,
   Response,
@@ -28,12 +29,15 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 import RateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
 import logger from "./utils/logger";
+import { oauthConfig } from "./config/auth0Config";
+import { auth } from "express-openid-connect";
 
 // Initialize express app
 const app = express();
 
 // Apply middleware
 // Apply global middlewares
+app.use(cookieParser());
 app.use(morgan("dev"));
 app.use(cors());
 app.use(express.json());
@@ -49,6 +53,8 @@ startExpiredSessionCleanupCronJobs();
 
 // Log application startup
 logger.info("Application started successfully");
+
+app.use(auth(oauthConfig));
 
 // Define routes
 app.use("/session", sessionRouter);
