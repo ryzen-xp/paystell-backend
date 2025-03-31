@@ -17,6 +17,7 @@ import userRoutes from "./routes/userRoutes";
 import healthRouter from "./routes/health.routes";
 import walletVerificationRoutes from "./routes/wallet-verification.routes";
 import merchantWebhookQueueRoutes from "./routes/merchantWebhookQueue.routes";
+import transactionReportsRoutes from "./routes/transactionReports.routes";
 
 // Middleware imports
 import { globalRateLimiter } from "./middlewares/globalRateLimiter.middleware";
@@ -64,6 +65,7 @@ app.use("/wallet-verification", walletVerificationRoutes);
 app.use("/users", userRoutes);
 app.use("/health", healthRouter);
 app.use("/webhook-queue/merchant", merchantWebhookQueueRoutes);
+app.use("/reports/transactions", transactionReportsRoutes);
 
 // Error handling middleware
 app.use(errorHandler as ErrorRequestHandler);
