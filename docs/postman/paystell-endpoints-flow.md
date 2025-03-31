@@ -1,3 +1,46 @@
+## 0. Sales Summary Endpoints
+
+These endpoints provide merchants with sales statistics and reporting capabilities. For detailed documentation, see `sales-summary-endpoints.md`. A separate Postman collection has been provided in `sales-summary-collection.json`.
+
+### 0.1. Get Complete Sales Summary
+- **Endpoint**: `GET /api/sales-summary`
+- **Description**: Retrieves a comprehensive sales summary with all metrics
+- **Authentication**: API Key (via X-API-Key header)
+- **Parameters**:
+  - **Query**:
+    - `startDate` (optional): Starting date for the summary period (ISO 8601)
+    - `endDate` (optional): Ending date for the summary period (ISO 8601)
+
+### 0.2. Get Total Sales
+- **Endpoint**: `GET /api/sales-summary/total`
+- **Description**: Retrieves the total sales amount for a merchant
+- **Authentication**: API Key (via X-API-Key header)
+- **Parameters**:
+  - **Query**:
+    - `startDate` (optional): Starting date for the summary period (ISO 8601)
+    - `endDate` (optional): Ending date for the summary period (ISO 8601)
+
+### 0.3. Get Sales by Time Period
+- **Endpoint**: `GET /api/sales-summary/by-period/:timePeriod`
+- **Description**: Retrieves sales data broken down by a specific time period
+- **Authentication**: API Key (via X-API-Key header)
+- **Parameters**:
+  - **Path**:
+    - `timePeriod`: Time period to group by (daily, weekly, monthly)
+  - **Query**:
+    - `startDate` (optional): Starting date for the summary period (ISO 8601)
+    - `endDate` (optional): Ending date for the summary period (ISO 8601)
+
+### 0.4. Get Top Selling Products
+- **Endpoint**: `GET /api/sales-summary/top-products`
+- **Description**: Retrieves the top selling products for a merchant
+- **Authentication**: API Key (via X-API-Key header)
+- **Parameters**:
+  - **Query**:
+    - `limit` (optional): Maximum number of products to return (default: 5)
+    - `startDate` (optional): Starting date for the summary period (ISO 8601)
+    - `endDate` (optional): Ending date for the summary period (ISO 8601)
+
 ## 1. User Authentication Endpoints
 
 ### 1.1. User Registration
