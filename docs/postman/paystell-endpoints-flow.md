@@ -301,6 +301,7 @@
         }
         ```
 
+
 ### 4.2. Update Merchant Profile
 - **Endpoint:** `PUT /merchants/profile`
 - **Description:** Updates the merchant's business profile information
