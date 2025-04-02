@@ -1,42 +1,56 @@
 import { Merchant } from "../interfaces/webhook.interfaces";
-import { Repository } from "typeorm";
+import { Repository, DataSource } from "typeorm";
 import { validate } from "class-validator";
 import { MerchantEntity } from "../entities/Merchant.entity";
 import AppDataSource from "../config/db";
-import { CreateMerchantDTO } from "../dtos/CreateMerchantDTO";
+import { CreateMerchantDTO } from "../../src/dtos/CreateMerchantDTO";
 import { UpdateMerchantProfileDTO } from "../../src/dtos/UpdateMerchantProfileDTO";
-import { CreateMerchantProfileDTO } from "../dtos/CreateMerchantProfileDTO";
+import { CreateMerchantProfileDTO } from "../../src/dtos/CreateMerchantProfileDTO";
 import { FileUploadService } from "./fileUpload.service";
 
 export class MerchantAuthService {
   private merchantRepository: Repository<MerchantEntity>;
+  private dataSource: DataSource;
 
   constructor() {
-    this.merchantRepository = AppDataSource.getRepository(MerchantEntity);
+    this.dataSource = AppDataSource;
+    this.merchantRepository = this.dataSource.getRepository(MerchantEntity);
   }
 
   async register(merchantData: CreateMerchantDTO): Promise<Merchant> {
-    const dto = Object.assign(new CreateMerchantDTO(), merchantData);
-    const errors = await validate(dto);
-    
-    if (errors.length > 0) {
-      throw new Error(
-        errors.map((err) => Object.values(err.constraints || {})).join(", "),
-      );
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const dto = Object.assign(new CreateMerchantDTO(), merchantData);
+      const errors = await validate(dto);
+      
+      if (errors.length > 0) {
+        throw new Error(
+          errors.map((err) => Object.values(err.constraints || {})).join(", "),
+        );
+      }
+
+      const merchantExists = await queryRunner.manager.findOne(MerchantEntity, {
+        where: { email: merchantData.email },
+      });
+
+      if (merchantExists) {
+        throw new Error("Email already registered");
+      }
+
+      const merchant = this.merchantRepository.create(merchantData);
+      const savedMerchant = await queryRunner.manager.save(merchant);
+
+      await queryRunner.commitTransaction();
+      return savedMerchant;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    const merchantExists = await this.merchantRepository.findOne({
-      where: { email: merchantData.email },
-    });
-
-    if (merchantExists) {
-      throw new Error("Email already registered");
-    }
-
-    const merchant = this.merchantRepository.create(merchantData);
-    const savedMerchant = await this.merchantRepository.save(merchant);
-
-    return savedMerchant;
   }
 
   private async findMerchantByApiKey(apiKey: string): Promise<Merchant | null> {
@@ -109,77 +123,135 @@ export class MerchantAuthService {
   }
 
   async createMerchantProfile(merchantId: string, profileData: CreateMerchantProfileDTO): Promise<Merchant> {
-    const dto = Object.assign(new CreateMerchantProfileDTO(), profileData);
-    const errors = await validate(dto);
-    
-    if (errors.length > 0) {
-      throw new Error(
-        errors.map((err) => Object.values(err.constraints || {})).join(", "),
-      );
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const dto = Object.assign(new CreateMerchantProfileDTO(), profileData);
+      const errors = await validate(dto);
+      
+      if (errors.length > 0) {
+        throw new Error(
+          errors.map((err) => Object.values(err.constraints || {})).join(", "),
+        );
+      }
+
+      const merchant = await queryRunner.manager.findOne(MerchantEntity, {
+        where: { id: merchantId },
+      });
+
+      if (!merchant) {
+        throw new Error('Merchant not found');
+      }
+
+      const updatedMerchant = this.merchantRepository.merge(merchant, profileData);
+      const savedMerchant = await queryRunner.manager.save(updatedMerchant);
+
+      await queryRunner.commitTransaction();
+      return savedMerchant;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    const merchant = await this.merchantRepository.findOne({
-      where: { id: merchantId },
-    });
-
-    if (!merchant) {
-      throw new Error('Merchant not found');
-    }
-
-    const updatedMerchant = this.merchantRepository.merge(merchant, profileData);
-    return this.merchantRepository.save(updatedMerchant);
 
   }
 
   async updateMerchantProfile(merchantId: string, profileData: UpdateMerchantProfileDTO): Promise<Merchant> {
-    const dto = Object.assign(new UpdateMerchantProfileDTO(), profileData);
-    const errors = await validate(dto);
-    
-    if (errors.length > 0) {
-      throw new Error(
-        errors.map((err) => Object.values(err.constraints || {})).join(", "),
-      );
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+
+    try {
+      const dto = Object.assign(new UpdateMerchantProfileDTO(), profileData);
+      const errors = await validate(dto);
+      
+      if (errors.length > 0) {
+        throw new Error(
+          errors.map((err) => Object.values(err.constraints || {})).join(", "),
+        );
+      }
+
+      const merchant = await queryRunner.manager.findOne(MerchantEntity, {
+        where: { id: merchantId },
+      });
+
+      if (!merchant) {
+        throw new Error('Merchant not found');
+      }
+
+      const updatedMerchant = this.merchantRepository.merge(merchant, profileData);
+      const savedMerchant = await queryRunner.manager.save(updatedMerchant);
+
+      await queryRunner.commitTransaction();
+      return savedMerchant;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    const merchant = await this.merchantRepository.findOne({
-      where: { id: merchantId },
-    });
-
-    if (!merchant) {
-      throw new Error('Merchant not found');
-    }
-
-    const updatedMerchant = this.merchantRepository.merge(merchant, profileData);
-    return this.merchantRepository.save(updatedMerchant);
   }
 
   async updateLogo(merchantId: string, logoUrl: string): Promise<Merchant> {
-    const merchant = await this.merchantRepository.findOne({
-      where: { id: merchantId },
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
+    try {
+      const merchant = await queryRunner.manager.findOne(MerchantEntity, {
+        where: { id: merchantId },
+      });
 
-    if (!merchant) {
-      throw new Error('Merchant not found');
+      if (!merchant) {
+        throw new Error('Merchant not found');
+      }
+
+      merchant.business_logo_url = logoUrl;
+      const savedMerchant = await queryRunner.manager.save(merchant);
+
+      await queryRunner.commitTransaction();
+      return savedMerchant;
+
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-
-    merchant.business_logo_url = logoUrl;
-    return this.merchantRepository.save(merchant);
   }
 
   async deleteLogo(merchantId: string): Promise<Merchant> {
-    const fileUploadService = new FileUploadService();
-    const merchant = await this.merchantRepository.findOne({
-      where: { id: merchantId },
-    });
+    const queryRunner = this.dataSource.createQueryRunner();
+    await queryRunner.connect();
+    await queryRunner.startTransaction();
 
-    if (!merchant) {
-      throw new Error('Merchant not found');
+    try {
+      const fileUploadService = new FileUploadService();
+      const merchant = await queryRunner.manager.findOne(MerchantEntity, {
+        where: { id: merchantId },
+      });
+
+      if (!merchant) {
+        throw new Error('Merchant not found');
+      }
+
+      const fileUrl = merchant.business_logo_url;
+      if (fileUrl) {
+        await fileUploadService.deleteFile(fileUrl);
+      }
+
+      merchant.business_logo_url = '';
+      const savedMerchant = await queryRunner.manager.save(merchant);
+
+      await queryRunner.commitTransaction();
+      return savedMerchant;
+    } catch (err) {
+      await queryRunner.rollbackTransaction();
+      throw err;
+    } finally {
+      await queryRunner.release();
     }
-    const fileUrl = merchant.business_logo_url;
-    if (fileUrl) {
-      await fileUploadService.deleteFile(fileUrl);
-    }
-    merchant.business_logo_url = '';
-    return this.merchantRepository.save(merchant);
   }
 }
