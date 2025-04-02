@@ -11,7 +11,7 @@ export const handleFileUpload = asyncHandler(
       return res.status(400).json({ error: 'No file uploaded' });
       }
 
-      const fileUrl = fileUploadService.getFileUrl(req.file.filename);
+      const fileUrl = fileUploadService.awsUploadFile(req.file);
       req.body.fileUrl = fileUrl;
       next();
     } catch (error) {
