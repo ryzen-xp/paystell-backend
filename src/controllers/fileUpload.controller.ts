@@ -1,6 +1,6 @@
 import { Request, Response, NextFunction, RequestHandler } from "express";
 import { FileUploadService } from "../services/fileUpload.service";
-import { asyncHandler } from "./merchantAuth";
+import { asyncHandler } from "../middlewares/merchantAuth";
 
 const fileUploadService = new FileUploadService();
 
