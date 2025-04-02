@@ -343,6 +343,7 @@ These endpoints provide merchants with sales statistics and reporting capabiliti
         }
         ```
 
+
 ### 4.2. Update Merchant Profile
 - **Endpoint:** `PUT /merchants/profile`
 - **Description:** Updates the merchant's business profile information
