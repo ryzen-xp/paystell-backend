@@ -2,9 +2,13 @@ import multer from "multer";
 import { v4 as uuidv4 } from "uuid";
 import * as fs from 'fs';
 import * as path from 'path';
+import { S3Client, PutObjectCommand, PutObjectCommandInput } from "@aws-sdk/client-s3";
+
 
 export class FileUploadService {
   private uploadDir: string;
+  private s3Client: S3Client;
+  private bucket: string;
 
   constructor() {
     this.uploadDir = path.join(process.cwd(), 'public', 'merchant-logos');
@@ -12,6 +16,14 @@ export class FileUploadService {
     if (!fs.existsSync(this.uploadDir)) {
       fs.mkdirSync(this.uploadDir, { recursive: true });
     }
+    this.s3Client = new S3Client({
+      region: process.env.AWS_REGION,
+      credentials: {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID || '',
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || '',
+      },
+    });
+    this.bucket = process.env.AWS_S3_BUCKET || '';
   }
 
   private storage = multer.diskStorage({
@@ -38,6 +50,27 @@ export class FileUploadService {
       cb(null, true);
     },
   });
+
+  async awsUploadFile(file: Express.Multer.File): Promise<string> {
+    const fileExtension = file.originalname.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExtension}`;
+
+    const uploadParams: PutObjectCommandInput = {
+      Bucket: this.bucket,
+      Key: `merchant-logos/${fileName}`,
+      Body: file.buffer,
+      ContentType: file.mimetype,
+      ACL: 'public-read',
+    };
+
+    try {
+      await this.s3Client.send(new PutObjectCommand(uploadParams));
+      return `https://${this.bucket}.s3.${process.env.AWS_REGION}.amazonaws.com/merchant-logos/${fileName}`;
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      throw new Error('Failed to upload file');
+    }
+  }
 
   async deleteFile(fileUrl: string): Promise<void> {
     try {
