@@ -1,5 +1,4 @@
-import express, { Request, Response } from "express";
-import { getRepository } from "typeorm";
+import express, { Request, Response, RequestHandler } from "express";
 import {
   Transaction,
   TransactionStatus,
@@ -10,12 +9,13 @@ import {
   TransactionReportFilters,
 } from "../services/TransactionReportService";
 import { AuthGuard } from "../guards/AuthGuard";
+import AppDataSource from "../config/db";
 
 const router = express.Router();
 
 // Initialize the service
 const transactionReportService = new TransactionReportService(
-  getRepository(Transaction),
+  AppDataSource.getRepository(Transaction),
 );
 
 /**
@@ -54,11 +54,11 @@ const transactionReportService = new TransactionReportService(
  *         description: Response format
  */
 
-// Apply auth middleware - cast to any to bypass type checks
-router.use(AuthGuard as any);
+// Apply auth middleware - cast to RequestHandler to bypass type checks
+router.use(AuthGuard as RequestHandler);
 
 // Generate transaction report
-// Use an anonymous function and cast to any to bypass type checking
+// Use an anonymous function and cast to RequestHandler to bypass type checking
 router.get("/", (async (req: Request, res: Response) => {
   try {
     const startDate = req.query.startDate as string | undefined;
@@ -120,6 +120,6 @@ router.get("/", (async (req: Request, res: Response) => {
       message: "An unknown error occurred",
     });
   }
-}) as any);
+}) as unknown as RequestHandler);
 
 export default router;

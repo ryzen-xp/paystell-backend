@@ -1,4 +1,4 @@
-import { IsString, IsEmail, IsOptional, IsUrl, Matches } from 'class-validator';
+import { IsString, IsEmail, IsOptional, IsUrl, Matches } from "class-validator";
 
 export class UpdateMerchantProfileDTO {
   @IsString()
@@ -15,7 +15,7 @@ export class UpdateMerchantProfileDTO {
 
   @IsString()
   @Matches(/^\+?[1-9]\d{1,14}$/, {
-    message: 'Invalid phone number format'
+    message: "Invalid phone number format",
   })
   @IsOptional()
   business_phone?: string;

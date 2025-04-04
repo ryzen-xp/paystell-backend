@@ -1,9 +1,9 @@
 {
 	"info": {
-		"_postman_id": "79013e02-ee2b-40f1-8623-34b5b9ca498e",
+		"_postman_id": "72545c13-e8bd-47d7-9b27-65c534b1a614",
 		"name": "Paystell",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
-		"_exporter_id": "11746427"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "20151144"
 	},
 	"item": [
 		{
@@ -26,7 +26,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:3000/auth/register"
+						"url": {
+							"raw": "http://localhost:3000/auth/register",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"register"
+							]
+						}
 					},
 					"response": []
 				},
@@ -47,7 +58,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:3000/auth/login"
+						"url": {
+							"raw": "http://localhost:3000/auth/login",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"login"
+							]
+						}
 					},
 					"response": []
 				},
@@ -65,7 +87,18 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:3000/auth/profile"
+						"url": {
+							"raw": "http://localhost:3000/auth/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"profile"
+							]
+						}
 					},
 					"response": []
 				},
@@ -92,7 +125,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:3000/auth/refresh-token"
+						"url": {
+							"raw": "http://localhost:3000/auth/refresh-token",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"refresh-token"
+							]
+						}
 					},
 					"response": []
 				}
@@ -115,7 +159,18 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:3000/auth/enable-2fa"
+						"url": {
+							"raw": "http://localhost:3000/auth/enable-2fa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"enable-2fa"
+							]
+						}
 					},
 					"response": []
 				},
@@ -142,7 +197,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:3000/auth/login-2fa"
+						"url": {
+							"raw": "http://localhost:3000/auth/login-2fa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"login-2fa"
+							]
+						}
 					},
 					"response": []
 				},
@@ -169,7 +235,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:3000/auth/disable-2fa"
+						"url": {
+							"raw": "http://localhost:3000/auth/disable-2fa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"auth",
+								"disable-2fa"
+							]
+						}
 					},
 					"response": []
 				},
@@ -196,7 +273,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:3001/auth/verify-2fa"
+						"url": {
+							"raw": "http://localhost:3001/auth/verify-2fa",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"auth",
+								"verify-2fa"
+							]
+						}
 					},
 					"response": []
 				}
@@ -225,7 +313,17 @@
 								}
 							}
 						},
-						"url": "http://localhost:3001/health"
+						"url": {
+							"raw": "http://localhost:3001/health",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"health"
+							]
+						}
 					},
 					"response": []
 				},
@@ -249,7 +347,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:3001/health/dependencies"
+						"url": {
+							"raw": "http://localhost:3001/health/dependencies",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"health",
+								"dependencies"
+							]
+						}
 					},
 					"response": []
 				},
@@ -273,7 +382,18 @@
 								}
 							}
 						},
-						"url": "http://localhost:3001/health/db"
+						"url": {
+							"raw": "http://localhost:3001/health/db",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"health",
+								"db"
+							]
+						}
 					},
 					"response": []
 				}
@@ -293,7 +413,18 @@
 								"type": "text"
 							}
 						],
-						"url": "http://localhost:3001/merchants/profile"
+						"url": {
+							"raw": "http://localhost:3001/merchants/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3001",
+							"path": [
+								"merchants",
+								"profile"
+							]
+						}
 					},
 					"response": []
 				},
@@ -311,7 +442,17 @@
 								}
 							}
 						},
-						"url": "localhost:3000/merchants/profile"
+						"url": {
+							"raw": "localhost:3000/merchants/profile",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"merchants",
+								"profile"
+							]
+						}
 					},
 					"response": []
 				},
@@ -330,7 +471,17 @@
 								}
 							]
 						},
-						"url": "localhost:3000/merchants/logo"
+						"url": {
+							"raw": "localhost:3000/merchants/logo",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"merchants",
+								"logo"
+							]
+						}
 					},
 					"response": []
 				},
@@ -339,17 +490,70 @@
 					"request": {
 						"method": "DELETE",
 						"header": [],
-						"url": "localhost:3000/merchants/logo"
+						"url": {
+							"raw": "localhost:3000/merchants/logo",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"merchants",
+								"logo"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "profile",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json",
+								"type": "text"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "   {\r\n     \"name\": \"Mi Negocio\",\r\n     \"email\": \"negocio@ejemplo.com\"\r\n   }",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:3000/merchants/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"merchants",
+								"profile"
+							]
+						}
 					},
 					"response": []
 				}
 			],
 			"auth": {
 				"type": "apikey",
-				"apikey": {
-					"value": "your-merchant-api-key",
-					"key": "x-api-key"
-				}
+				"apikey": [
+					{
+						"key": "value",
+						"value": "your-merchant-api-key",
+						"type": "string"
+					},
+					{
+						"key": "key",
+						"value": "x-api-key",
+						"type": "string"
+					}
+				]
 			},
 			"event": [
 				{
@@ -371,6 +575,69 @@
 							""
 						]
 					}
+				}
+			]
+		},
+		{
+			"name": "Transaction Reports",
+			"item": [
+				{
+					"name": "Generate Transaction Report",
+					"request": {
+						"auth": {
+							"type": "bearer",
+							"bearer": [
+								{
+									"key": "token",
+									"value": "{{token}}",
+									"type": "string"
+								}
+							]
+						},
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:3000/reports/transactions?startDate=2023-01-01T00:00:00Z&endDate=2023-12-31T23:59:59Z&status=SUCCESS&paymentMethod=card&format=json",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "3000",
+							"path": [
+								"reports",
+								"transactions"
+							],
+							"query": [
+								{
+									"key": "startDate",
+									"value": "2023-01-01T00:00:00Z",
+									"description": "Start date for the report (ISO format)"
+								},
+								{
+									"key": "endDate",
+									"value": "2023-12-31T23:59:59Z",
+									"description": "End date for the report (ISO format)"
+								},
+								{
+									"key": "status",
+									"value": "SUCCESS",
+									"description": "Filter by transaction status (SUCCESS, PENDING, FAILED)"
+								},
+								{
+									"key": "paymentMethod",
+									"value": "card",
+									"description": "Filter by payment method (card, bank_transfer, wallet)"
+								},
+								{
+									"key": "format",
+									"value": "json",
+									"description": "Response format (json, csv)"
+								}
+							]
+						},
+						"description": "Generates a transaction report with filters and export options."
+					},
+					"response": []
 				}
 			]
 		}

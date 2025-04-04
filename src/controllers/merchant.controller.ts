@@ -180,10 +180,11 @@ export class MerchantController {
   async getProfile(req: CustomRequest, res: Response): Promise<Response> {
     try {
       const merchantId = req.merchant?.id ?? "";
-      const merchant: Partial<Merchant> | null = await merchantAuthService.getBusinessProfileById(merchantId);
-      
+      const merchant: Partial<Merchant> | null =
+        await merchantAuthService.getBusinessProfileById(merchantId);
+
       if (!merchant) {
-        return res.status(404).json({ error: 'Merchant not found' });
+        return res.status(404).json({ error: "Merchant not found" });
       }
 
       return res.json(merchant);
@@ -194,29 +195,28 @@ export class MerchantController {
 
   async createProfile(req: CustomRequest, res: Response): Promise<Response> {
     try {
-      const merchantId = req.merchant?.id ?? '';
+      const merchantId = req.merchant?.id ?? "";
       const profileData = req.body;
 
       const createdMerchant = await merchantAuthService.createMerchantProfile(
         merchantId,
-        profileData
+        profileData,
       );
 
       return res.json(createdMerchant);
     } catch (error) {
-      return res.status(500).json({ error: (error as Error).message
-      });
+      return res.status(500).json({ error: (error as Error).message });
     }
   }
 
   async updateProfile(req: CustomRequest, res: Response): Promise<Response> {
     try {
-      const merchantId = req.merchant?.id ?? '';
+      const merchantId = req.merchant?.id ?? "";
       const profileData = req.body;
 
       const updatedMerchant = await merchantAuthService.updateMerchantProfile(
         merchantId,
-        profileData
+        profileData,
       );
 
       return res.json(updatedMerchant);
@@ -227,17 +227,17 @@ export class MerchantController {
 
   async uploadLogo(req: CustomRequest, res: Response): Promise<Response> {
     try {
-      const merchantId = req.merchant?.id ?? '';
+      const merchantId = req.merchant?.id ?? "";
       const logoUrl = req.body.fileUrl;
 
       const updatedMerchant = await merchantAuthService.updateLogo(
-        merchantId ?? '',
-        logoUrl
+        merchantId ?? "",
+        logoUrl,
       );
 
       return res.json({
-        message: 'Logo uploaded successfully',
-        business_logo_url: updatedMerchant.business_logo_url
+        message: "Logo uploaded successfully",
+        business_logo_url: updatedMerchant.business_logo_url,
       });
     } catch (error) {
       return res.status(500).json({ error: (error as Error).message });
@@ -246,12 +246,12 @@ export class MerchantController {
 
   async deleteLogo(req: CustomRequest, res: Response): Promise<Response> {
     try {
-      const merchantId = req.merchant?.id ?? '';;
+      const merchantId = req.merchant?.id ?? "";
 
       await merchantAuthService.deleteLogo(merchantId);
 
       return res.json({
-        message: 'Logo deleted successfully'
+        message: "Logo deleted successfully",
       });
     } catch (error) {
       return res.status(500).json({ error: (error as Error).message });

@@ -40,7 +40,7 @@ describe("TransactionReportService", () => {
   beforeEach(() => {
     mockRepository = {
       find: jest.fn().mockResolvedValue(mockTransactions),
-    } as any;
+    } as unknown as jest.Mocked<Repository<Transaction>>;
 
     service = new TransactionReportService(mockRepository);
   });

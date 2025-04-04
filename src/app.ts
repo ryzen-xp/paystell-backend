@@ -73,12 +73,12 @@ app.use("/reports/transactions", transactionReportsRoutes);
 app.use(errorHandler as ErrorRequestHandler);
 
 // Handle 404 errors
-app.use((req: any, res: any) => {
+app.use(((req: Request, res: Response) => {
   res.status(404).json({
     error: "error",
     message: `Route ${req.originalUrl} not found`,
   });
-});
+}) as RequestHandler);
 
 // Export app
 export default app;

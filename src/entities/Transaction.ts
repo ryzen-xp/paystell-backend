@@ -46,7 +46,7 @@ export class Transaction {
   paymentMethod: PaymentMethod;
 
   @Column({ type: "jsonb", nullable: true })
-  metadata: Record<string, any>;
+  metadata: Record<string, unknown>;
 
   @Column({ nullable: true })
   description: string;

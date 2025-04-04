@@ -45,7 +45,7 @@ export class MerchantEntity {
 
   @Column({ nullable: true })
   business_logo_url: string;
-  
+
   @CreateDateColumn()
   createdAt: Date;
 
