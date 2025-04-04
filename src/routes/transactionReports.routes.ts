@@ -1,5 +1,4 @@
 import express, { Request, Response } from "express";
-import { getRepository } from "typeorm";
 import {
   Transaction,
   TransactionStatus,
@@ -10,12 +9,13 @@ import {
   TransactionReportFilters,
 } from "../services/TransactionReportService";
 import { AuthGuard } from "../guards/AuthGuard";
+import AppDataSource from "../config/db";
 
 const router = express.Router();
 
 // Initialize the service
 const transactionReportService = new TransactionReportService(
-  getRepository(Transaction),
+  AppDataSource.getRepository(Transaction),
 );
 
 /**
