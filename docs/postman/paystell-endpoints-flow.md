@@ -343,7 +343,6 @@ These endpoints provide merchants with sales statistics and reporting capabiliti
         }
         ```
 
-
 ### 4.2. Update Merchant Profile
 - **Endpoint:** `PUT /merchants/profile`
 - **Description:** Updates the merchant's business profile information
@@ -452,3 +451,62 @@ These endpoints provide merchants with sales statistics and reporting capabiliti
 - Supported image formats: JPG, JPEG, PNG, GIF.
 - Phone numbers must be in international format (e.g., `+1234567890`).
 - Logo URLs are relative to the server's base URL.
+
+## 5. Transaction Reports Endpoints
+
+### 5.1. Generate Transaction Report
+
+- **Endpoint**: `GET /reports/transactions`
+- **Description**: Generates a filtered report of transactions with various export options
+- **Headers**:
+  - **Authorization**: `Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...`
+- **Parameters**:
+  - **Query Parameters**:
+    - `startDate`: (Optional) Start date for the report in ISO format (e.g., "2023-01-01T00:00:00Z")
+    - `endDate`: (Optional) End date for the report in ISO format (e.g., "2023-12-31T23:59:59Z")
+    - `status`: (Optional) Filter by transaction status ("SUCCESS", "PENDING", "FAILED")
+    - `paymentMethod`: (Optional) Filter by payment method ("card", "bank_transfer", "wallet")
+    - `format`: (Optional) Response format ("json" or "csv"), defaults to "json"
+- **Successful Response** (200 OK) - JSON format:
+  ```json
+  {
+    "success": true,
+    "data": {
+      "summary": {
+        "totalTransactions": 123,
+        "totalAmount": 12345.67,
+        "successfulTransactions": 115,
+        "failedTransactions": 8,
+        "averageTransactionAmount": 100.37
+      },
+      "transactions": [
+        {
+          "id": "tx_123abc",
+          "amount": 50.0,
+          "status": "SUCCESS",
+          "paymentMethod": "card",
+          "createdAt": "2023-05-12T09:32:41.021Z",
+          "reference": "INV-001",
+          "description": "Monthly subscription"
+        }
+        // ... more transactions ...
+      ]
+    }
+  }
+  ```
+- **Successful Response** (200 OK) - CSV format:
+  Text file with CSV-formatted data (Content-Type: text/csv)
+- **Error Response** (401 Unauthorized):
+  ```json
+  {
+    "success": false,
+    "message": "Unauthorized"
+  }
+  ```
+- **Error Response** (400 Bad Request):
+  ```json
+  {
+    "success": false,
+    "message": "Invalid date format"
+  }
+  ```
