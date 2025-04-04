@@ -6,7 +6,7 @@ import { Payment } from "../../entities/Payment";
 import { getRepository } from "typeorm";
 
 // Define repository interface types
-interface MockRepository<T> {
+interface MockRepository {
   findOne?: jest.Mock;
   find?: jest.Mock;
   createQueryBuilder?: jest.Mock;
@@ -23,10 +23,10 @@ jest.mock("typeorm", () => {
 
 describe("SalesSummaryService", () => {
   let salesSummaryService: SalesSummaryService;
-  let mockMerchantRepository: MockRepository<MerchantEntity>;
-  let mockUserRepository: MockRepository<User>;
-  let mockPaymentLinkRepository: MockRepository<PaymentLink>;
-  let mockPaymentRepository: MockRepository<Payment>;
+  let mockMerchantRepository: MockRepository;
+  let mockUserRepository: MockRepository;
+  let mockPaymentLinkRepository: MockRepository;
+  let mockPaymentRepository: MockRepository;
 
   beforeEach(() => {
     // Reset mocks

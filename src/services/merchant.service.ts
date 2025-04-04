@@ -25,7 +25,7 @@ export class MerchantAuthService {
     try {
       const dto = Object.assign(new CreateMerchantDTO(), merchantData);
       const errors = await validate(dto);
-      
+
       if (errors.length > 0) {
         throw new Error(
           errors.map((err) => Object.values(err.constraints || {})).join(", "),
@@ -101,7 +101,7 @@ export class MerchantAuthService {
 
     return merchant;
   }
-  
+
   async getBusinessProfileById(id: string): Promise<Partial<Merchant>> {
     const merchant = await this.merchantRepository.findOne({
       where: { id },
@@ -119,10 +119,12 @@ export class MerchantAuthService {
       business_phone: merchant.business_phone,
       business_logo_url: merchant.business_logo_url,
     };
-
   }
 
-  async createMerchantProfile(merchantId: string, profileData: CreateMerchantProfileDTO): Promise<Merchant> {
+  async createMerchantProfile(
+    merchantId: string,
+    profileData: CreateMerchantProfileDTO,
+  ): Promise<Merchant> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -130,7 +132,7 @@ export class MerchantAuthService {
     try {
       const dto = Object.assign(new CreateMerchantProfileDTO(), profileData);
       const errors = await validate(dto);
-      
+
       if (errors.length > 0) {
         throw new Error(
           errors.map((err) => Object.values(err.constraints || {})).join(", "),
@@ -142,10 +144,13 @@ export class MerchantAuthService {
       });
 
       if (!merchant) {
-        throw new Error('Merchant not found');
+        throw new Error("Merchant not found");
       }
 
-      const updatedMerchant = this.merchantRepository.merge(merchant, profileData);
+      const updatedMerchant = this.merchantRepository.merge(
+        merchant,
+        profileData,
+      );
       const savedMerchant = await queryRunner.manager.save(updatedMerchant);
 
       await queryRunner.commitTransaction();
@@ -156,10 +161,12 @@ export class MerchantAuthService {
     } finally {
       await queryRunner.release();
     }
-
   }
 
-  async updateMerchantProfile(merchantId: string, profileData: UpdateMerchantProfileDTO): Promise<Merchant> {
+  async updateMerchantProfile(
+    merchantId: string,
+    profileData: UpdateMerchantProfileDTO,
+  ): Promise<Merchant> {
     const queryRunner = this.dataSource.createQueryRunner();
     await queryRunner.connect();
     await queryRunner.startTransaction();
@@ -167,7 +174,7 @@ export class MerchantAuthService {
     try {
       const dto = Object.assign(new UpdateMerchantProfileDTO(), profileData);
       const errors = await validate(dto);
-      
+
       if (errors.length > 0) {
         throw new Error(
           errors.map((err) => Object.values(err.constraints || {})).join(", "),
@@ -179,10 +186,13 @@ export class MerchantAuthService {
       });
 
       if (!merchant) {
-        throw new Error('Merchant not found');
+        throw new Error("Merchant not found");
       }
 
-      const updatedMerchant = this.merchantRepository.merge(merchant, profileData);
+      const updatedMerchant = this.merchantRepository.merge(
+        merchant,
+        profileData,
+      );
       const savedMerchant = await queryRunner.manager.save(updatedMerchant);
 
       await queryRunner.commitTransaction();
@@ -205,7 +215,7 @@ export class MerchantAuthService {
       });
 
       if (!merchant) {
-        throw new Error('Merchant not found');
+        throw new Error("Merchant not found");
       }
 
       merchant.business_logo_url = logoUrl;
@@ -213,7 +223,6 @@ export class MerchantAuthService {
 
       await queryRunner.commitTransaction();
       return savedMerchant;
-
     } catch (err) {
       await queryRunner.rollbackTransaction();
       throw err;
@@ -234,7 +243,7 @@ export class MerchantAuthService {
       });
 
       if (!merchant) {
-        throw new Error('Merchant not found');
+        throw new Error("Merchant not found");
       }
 
       const fileUrl = merchant.business_logo_url;
@@ -242,7 +251,7 @@ export class MerchantAuthService {
         await fileUploadService.deleteFile(fileUrl);
       }
 
-      merchant.business_logo_url = '';
+      merchant.business_logo_url = "";
       const savedMerchant = await queryRunner.manager.save(merchant);
 
       await queryRunner.commitTransaction();

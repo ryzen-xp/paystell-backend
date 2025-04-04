@@ -1,5 +1,6 @@
-import { TransactionStatus, PaymentMethod } from "../entities/Transaction";
+import { TransactionStatus, PaymentMethod, Transaction } from "../entities/Transaction";
 import { TransactionReportService } from "../services/TransactionReportService";
+import { Repository } from "typeorm";
 
 // Mock transactions for testing
 const mockTransactions = [
@@ -41,7 +42,7 @@ async function testReportGeneration() {
     console.log("Testing Transaction Report Generation");
 
     // Create an instance of the service with the mock repository
-    const service = new TransactionReportService(mockRepository as any);
+    const service = new TransactionReportService(mockRepository as unknown as Repository<Transaction>);
 
     // Test generating a report
     const report = await service.generateReport({
