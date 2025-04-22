@@ -49,6 +49,13 @@ app.use(
 app.use(globalRateLimiter as RequestHandler);
 app.use(requestLogger as RequestHandler);
 
+// Add timeout configurations
+app.use((req, res, next) => {
+  req.setTimeout(30000); // 30 seconds
+  res.setTimeout(30000); // 30 seconds
+  next();
+});
+
 // Start scheduled jobs
 startExpiredSessionCleanupCronJobs();
 
