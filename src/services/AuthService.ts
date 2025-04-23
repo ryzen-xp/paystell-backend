@@ -94,25 +94,25 @@ export class AuthService {
 
   async register(userData: UserRegistrationData): Promise<UserResponse> {
     try {
-      console.log('Starting user registration process');
-      
+      console.log("Starting user registration process");
+
       const userExists = await this.userRepository.findOne({
         where: { email: userData.email },
       });
 
       if (userExists) {
-        console.log('User already exists with email:', userData.email);
-        throw new Error('User with this email already exists');
+        console.log("User already exists with email:", userData.email);
+        throw new Error("User with this email already exists");
       }
 
-      console.log('Creating new user');
+      console.log("Creating new user");
       const user = this.userRepository.create(userData);
-      
-      console.log('Saving user to database');
+
+      console.log("Saving user to database");
       const savedUser = await this.userRepository.save(user);
-      
-      console.log('User successfully registered:', savedUser.id);
-      
+
+      console.log("User successfully registered:", savedUser.id);
+
       return {
         id: savedUser.id,
         email: savedUser.email,
@@ -121,10 +121,10 @@ export class AuthService {
         isEmailVerified: savedUser.isEmailVerified,
         isWalletVerified: savedUser.isWalletVerified,
         createdAt: savedUser.createdAt,
-        updatedAt: savedUser.updatedAt
+        updatedAt: savedUser.updatedAt,
       };
     } catch (error) {
-      console.error('Error during user registration:', error);
+      console.error("Error during user registration:", error);
       throw error;
     }
   }

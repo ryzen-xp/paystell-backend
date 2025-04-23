@@ -1,13 +1,13 @@
-import { Router } from 'express';
+import { Router } from "express";
 import AppDataSource from "../config/db";
 
 const router = Router();
 
 router.get("/", (req, res) => {
   res.status(200).json({
-    status: 'ok',
-    message: 'Server is running',
-    timestamp: new Date().toISOString()
+    status: "ok",
+    message: "Server is running",
+    timestamp: new Date().toISOString(),
   });
 });
 
