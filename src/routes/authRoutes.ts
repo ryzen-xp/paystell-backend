@@ -37,26 +37,29 @@ const authController = new AuthController();
 
 // Auth0 authentication routes - exclude registration and skip in development
 router.use((req, res, next) => {
-  console.log('Auth route middleware - Path:', req.path);
-  console.log('Auth route middleware - Method:', req.method);
-  console.log('Auth route middleware - Headers:', req.headers);
-  
+  console.log("Auth route middleware - Path:", req.path);
+  console.log("Auth route middleware - Method:", req.method);
+  console.log("Auth route middleware - Headers:", req.headers);
+
   // Skip Auth0 in development or for registration
-  if (process.env.NODE_ENV === 'development') {
-    console.log('Skipping Auth0 middleware');
+  if (process.env.NODE_ENV === "development") {
+    console.log("Skipping Auth0 middleware");
     next();
   } else {
-    console.log('Applying Auth0 middleware');
+    console.log("Applying Auth0 middleware");
     auth(oauthConfig)(req, res, next);
   }
 });
 
 // Error handling middleware
 const errorHandler: ErrorRequestHandler = (err, req, res, _next) => {
-  console.error('Auth route error:', err);
+  console.error("Auth route error:", err);
   res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Something went wrong",
   });
 };
 

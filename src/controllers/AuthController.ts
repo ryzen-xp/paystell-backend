@@ -30,14 +30,14 @@ export class AuthController {
   login = async (req: Request, res: Response): Promise<void> => {
     try {
       const { email, password } = req.body;
-      console.log('Login attempt for email:', email);
+      console.log("Login attempt for email:", email);
 
       const result = await this.authService.login(email, password);
-      console.log('Login successful for user:', result.user.id);
-      
+      console.log("Login successful for user:", result.user.id);
+
       res.status(200).json(result);
     } catch (error) {
-      console.error('Login error:', error);
+      console.error("Login error:", error);
       if (error instanceof Error) {
         res.status(401).json({ message: error.message });
       } else {

@@ -41,22 +41,24 @@ app.use(cookieParser());
 app.use(morgan("dev"));
 
 // CORS configuration
-app.use(cors({
-  origin: true, // Allow all origins in development
-  credentials: true,
-  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS', 'PATCH'],
-  allowedHeaders: [
-    'Content-Type',
-    'Authorization',
-    'X-Requested-With',
-    'Accept',
-    'Origin',
-    'Access-Control-Request-Method',
-    'Access-Control-Request-Headers'
-  ],
-  exposedHeaders: ['Authorization'],
-  maxAge: 86400 // 24 hours
-}));
+app.use(
+  cors({
+    origin: true, // Allow all origins in development
+    credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "X-Requested-With",
+      "Accept",
+      "Origin",
+      "Access-Control-Request-Method",
+      "Access-Control-Request-Headers",
+    ],
+    exposedHeaders: ["Authorization"],
+    maxAge: 86400, // 24 hours
+  }),
+);
 
 app.use(express.json());
 app.use(validateIpAddress as RequestHandler);
@@ -81,12 +83,12 @@ logger.info("Application started successfully");
 
 // Apply Auth0 middleware to all routes except registration and health check
 app.use((req, res, next) => {
-  console.log('Request path:', req.path);
-  if (req.path === '/auth/register' || req.path === '/health') {
-    console.log('Skipping Auth0 middleware for:', req.path);
+  console.log("Request path:", req.path);
+  if (req.path === "/auth/register" || req.path === "/health") {
+    console.log("Skipping Auth0 middleware for:", req.path);
     next();
   } else {
-    console.log('Applying Auth0 middleware for:', req.path);
+    console.log("Applying Auth0 middleware for:", req.path);
     auth(oauthConfig)(req, res, next);
   }
 });
@@ -105,10 +107,13 @@ app.use("/reports/transactions", transactionReportsRoutes);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
-  console.error('Unhandled error:', err);
+  console.error("Unhandled error:", err);
   res.status(500).json({
-    error: 'Internal Server Error',
-    message: process.env.NODE_ENV === 'development' ? err.message : 'Something went wrong'
+    error: "Internal Server Error",
+    message:
+      process.env.NODE_ENV === "development"
+        ? err.message
+        : "Something went wrong",
   });
 };
 
@@ -116,7 +121,7 @@ app.use(customErrorHandler);
 
 // Handle 404 errors
 app.use(((req: Request, res: Response) => {
-  console.log('404 - Route not found:', req.originalUrl);
+  console.log("404 - Route not found:", req.originalUrl);
   res.status(404).json({
     error: "error",
     message: `Route ${req.originalUrl} not found`,

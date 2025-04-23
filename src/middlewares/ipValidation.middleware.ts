@@ -42,7 +42,7 @@ export const validateIpAddress = (
     req.validatedIp = validatedIp;
 
     // In development, allow all requests
-    if (process.env.NODE_ENV === 'development') {
+    if (process.env.NODE_ENV === "development") {
       next();
       return;
     }
@@ -60,7 +60,7 @@ export const validateIpAddress = (
 
     next();
   } catch (error) {
-    console.error('Error in IP validation middleware:', error);
+    console.error("Error in IP validation middleware:", error);
     next(); // Continue even if there's an error in development
   }
 };
