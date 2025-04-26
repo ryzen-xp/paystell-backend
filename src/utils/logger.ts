@@ -1,6 +1,7 @@
 import winston from "winston";
 import { Request } from "express";
 import { v4 as uuidv4 } from "uuid";
+import fs from "fs";
 
 // Define log levels
 const levels = {
@@ -43,15 +44,29 @@ const level = process.env.NODE_ENV === "production" ? "info" : "debug";
 
 // Create the logger instance
 const logger = winston.createLogger({
-  level,
+  level: process.env.LOG_LEVEL || "info",
   levels,
-  format: fileFormat,
+  format: winston.format.combine(
+    winston.format.timestamp(),
+    winston.format.json(),
+  ),
   defaultMeta: { service: "paystell-backend" },
   transports: [
-    // Write logs with level 'error' and below to error.log
-    new winston.transports.File({ filename: "logs/error.log", level: "error" }),
-    // Write all logs to combined.log
-    new winston.transports.File({ filename: "logs/combined.log" }),
+    new winston.transports.Console({
+      format: winston.format.combine(
+        winston.format.colorize(),
+        winston.format.simple(),
+      ),
+    }),
+    new winston.transports.File({
+      filename: "error.log",
+      level: "error",
+      dirname: "logs",
+    }),
+    new winston.transports.File({
+      filename: "combined.log",
+      dirname: "logs",
+    }),
   ],
   exceptionHandlers: [
     new winston.transports.File({ filename: "logs/exceptions.log" }),
@@ -60,6 +75,11 @@ const logger = winston.createLogger({
     new winston.transports.File({ filename: "logs/rejections.log" }),
   ],
 });
+
+// Create logs directory if it doesn't exist
+if (!fs.existsSync("logs")) {
+  fs.mkdirSync("logs");
+}
 
 // Add console transport in development environment
 if (process.env.NODE_ENV !== "production") {

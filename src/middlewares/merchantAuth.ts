@@ -1,75 +1,63 @@
 // middleware/auth.ts
-import { Request, Response, NextFunction, RequestHandler } from "express";
+import { Response, NextFunction, RequestHandler } from "express";
+import { Request } from "express-serve-static-core";
 import { MerchantAuthService } from "../services/merchant.service";
-import { Merchant } from "../interfaces/webhook.interfaces";
+import { AppError } from "../utils/AppError";
+import logger from "../utils/logger";
 import { UserRole } from "../enums/UserRole";
+import { Merchant } from "../interfaces/webhook.interfaces";
 
-// Extender el tipo Request mediante una extensión de módulo
-export interface CustomRequest extends Request {
-  user?: {
-    id: number;
-    email: string;
-    tokenExp?: number;
-    role?: UserRole;
-  };
-  merchant: Merchant;
+// Augment the Express Request type
+declare global {
+  namespace Express {
+    interface Request {
+      merchant?: Merchant;
+      user?: {
+        id: number;
+        email: string;
+        tokenExp?: number;
+        role?: UserRole;
+        jti?: string;
+      };
+    }
+  }
 }
 
 const merchantAuthService = new MerchantAuthService();
 
-export const asyncHandler =
-  (
-    fn: (
-      req: CustomRequest,
-      res: Response,
-      next: NextFunction,
-    ) => Promise<void | Response>,
-  ): RequestHandler =>
-  (req, res, next) => {
-    Promise.resolve(fn(req as CustomRequest, res, next)).catch(next);
-  };
+type AsyncRequestHandler = (
+  req: Request,
+  res: Response,
+  next: NextFunction,
+) => Promise<any>;
 
-// Extender los tipos de Express usando la sintaxis moderna
-// en lugar de namespace
-import "express";
-declare module "express" {
-  interface Request {
-    merchant?: Merchant; // Haciendo merchant opcional
-  }
-}
+export const asyncHandler = (fn: AsyncRequestHandler): RequestHandler => {
+  return (req, res, next) => {
+    Promise.resolve(fn(req, res, next)).catch(next);
+  };
+};
 
 export const authenticateMerchant = asyncHandler(
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
-    try {
-      const apiKey = req.headers["x-api-key"] as string;
+  async (req: Request, res: Response, next: NextFunction) => {
+    const apiKey = req.headers["x-api-key"] as string;
 
-      if (!apiKey) {
-        return res.status(401).json({
-          error: "No API key provided",
-        });
-      }
-
-      // Use your MerchantAuthService to find the merchant
-      const merchant = await merchantAuthService.validateApiKey(apiKey);
-
-      if (!merchant) {
-        return res.status(401).json({
-          error: "Invalid API key",
-        });
-      }
-
-      // Attach merchant to request object
-      req.merchant = merchant;
-      next();
-    } catch (error) {
-      console.error("Auth error:", error);
-      res.status(500).json({ error: "Authentication failed" });
+    if (!apiKey) {
+      throw new AppError("API key is required", 401);
     }
+
+    const merchant = await merchantAuthService.validateApiKey(apiKey);
+
+    if (!merchant) {
+      throw new AppError("Invalid API key", 401);
+    }
+
+    req.merchant = merchant;
+    next();
   },
 );
 
 export const authenticateStellarWebhook = asyncHandler(
-  async (req: CustomRequest, res: Response, next: NextFunction) => {
+  async (req: Request, res: Response, next: NextFunction) => {
     try {
       const token = req.query.token as string;
       // Use your MerchantAuthService to find the merchant
