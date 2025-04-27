@@ -37,4 +37,6 @@ router.get(
   asyncHandler(contractController.getMerchantDetails.bind(contractController)),
 );
 
+
+
 export default router;

@@ -42,6 +42,11 @@ const fileFormat = winston.format.combine(
 // Determine log level based on environment
 const level = process.env.NODE_ENV === "production" ? "info" : "debug";
 
+// Ensure logs directory exists _before_ transports are instantiated
+if (!fs.existsSync("logs")) {
+  fs.mkdirSync("logs");
+}
+
 // Create the logger instance
 const logger = winston.createLogger({
   level: process.env.LOG_LEVEL || "info",
@@ -52,12 +57,6 @@ const logger = winston.createLogger({
   ),
   defaultMeta: { service: "paystell-backend" },
   transports: [
-    new winston.transports.Console({
-      format: winston.format.combine(
-        winston.format.colorize(),
-        winston.format.simple(),
-      ),
-    }),
     new winston.transports.File({
       filename: "error.log",
       level: "error",
@@ -82,13 +81,6 @@ if (!fs.existsSync("logs")) {
 }
 
 // Add console transport in development environment
-if (process.env.NODE_ENV !== "production") {
-  logger.add(
-    new winston.transports.Console({
-      format: consoleFormat,
-    }),
-  );
-}
 
 // Define log metadata types
 interface RequestMetadata {

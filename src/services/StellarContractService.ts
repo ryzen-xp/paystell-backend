@@ -21,8 +21,8 @@ import { validateSignature } from "../utils/validateSignature";
 import logger from "../utils/logger";
 
 export class StellarContractService {
-  private server: typeof Server;
-  private contract: typeof Contract;
+  private server: InstanceType<typeof Server>;
+  private contract: InstanceType<typeof Contract>;
   private contractId: string;
   private redis: Redis;
 
@@ -86,7 +86,9 @@ export class StellarContractService {
           ),
         )
         .setTimeout(TimeoutInfinite)
-        .build();
+   .build();
+// Sign with the contract admin or merchant key
+transaction.sign(StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET));
 
       // Submit the transaction
       const response = await this.server.submitTransaction(transaction);

@@ -4,8 +4,13 @@ import {
   IsNumber,
   Min,
   IsOptional,
+  IsEmail,
+  ValidateNested,
+  
+  
 } from "class-validator";
 import { IsStellarAddress } from "../validators/IsStellarAddress";
+
 
 export class MerchantRegistrationDTO {
   @IsNotEmpty()
@@ -16,8 +21,8 @@ export class MerchantRegistrationDTO {
   @IsString()
   name: string;
 
-  @IsNotEmpty()
-  @IsString()
+   @IsNotEmpty()
+   @IsEmail()
   email: string;
 }
 
@@ -64,6 +69,7 @@ export class PaymentProcessingDTO {
   payerAddress: string;
 
   @IsNotEmpty()
+  @ValidateNested()
   paymentOrder: PaymentOrderDTO;
 
   @IsNotEmpty()

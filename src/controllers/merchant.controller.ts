@@ -231,7 +231,7 @@ export class MerchantController {
       const logoUrl = req.body.fileUrl;
 
       const updatedMerchant = await merchantAuthService.updateLogo(
-        merchantId ?? "",
+        merchantId,
         logoUrl,
       );
 

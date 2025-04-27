@@ -1,6 +1,6 @@
-import { Response } from "express";
-import { Request } from "express-serve-static-core";
+import { Request, Response } from "express";
 import { validate } from "class-validator";
+import { plainToInstance } from "class-transformer";
 import { StellarContractService } from "../services/StellarContractService";
 import {
   MerchantRegistrationDTO,
@@ -9,14 +9,16 @@ import {
 } from "../dtos/StellarContractDTO";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
-import rateLimit from "express-rate-limit";
+import rateLimit, {
+  RateLimitRequestHandler,
+} from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
 import { Redis, RedisOptions } from "ioredis";
 
 export class StellarContractController {
   private contractService: StellarContractService;
   private redis: Redis;
-  public paymentRateLimiter;
+  public paymentRateLimiter: RateLimitRequestHandler;
 
   constructor() {
     this.contractService = new StellarContractService();
@@ -58,8 +60,10 @@ export class StellarContractController {
     res: Response,
   ): Promise<Response> => {
     try {
-      const merchantData = new MerchantRegistrationDTO();
-      Object.assign(merchantData, req.body);
+const merchantData = plainToInstance(MerchantRegistrationDTO, req.body, {
+  enableImplicitConversion: true,
+  excludeExtraneousValues: true, // strips unknown props
+});
 
       // Validate DTO
       const errors = await validate(merchantData);

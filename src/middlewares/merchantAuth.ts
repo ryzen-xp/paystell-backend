@@ -1,6 +1,10 @@
 // middleware/auth.ts
-import { Response, NextFunction, RequestHandler } from "express";
-import { Request } from "express-serve-static-core";
+import {
+  Request,
+  Response,
+  NextFunction,
+  RequestHandler,
+} from "express";
 import { MerchantAuthService } from "../services/merchant.service";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
@@ -25,11 +29,11 @@ declare global {
 
 const merchantAuthService = new MerchantAuthService();
 
-type AsyncRequestHandler = (
+type AsyncRequestHandler<T = unknown> = (
   req: Request,
   res: Response,
   next: NextFunction,
-) => Promise<any>;
+)  => Promise<T>;
 
 export const asyncHandler = (fn: AsyncRequestHandler): RequestHandler => {
   return (req, res, next) => {

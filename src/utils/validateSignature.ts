@@ -8,11 +8,11 @@ import { PaymentOrderDTO } from "../dtos/StellarContractDTO";
  * @param merchantPublicKey The merchant's public key
  * @returns boolean indicating if the signature is valid
  */
-export async function validateSignature(
+export function validateSignature(
   paymentOrder: PaymentOrderDTO,
   signature: string,
   merchantPublicKey: string,
-): Promise<boolean> {
+): boolean {
   try {
     // Create message to verify
     const message = Buffer.from(
