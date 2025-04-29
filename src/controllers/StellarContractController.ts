@@ -10,9 +10,10 @@ import {
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import rateLimit, { RateLimitRequestHandler } from "express-rate-limit";
+import { ValidationError } from "class-validator";
 
 // Helper function to format validation errors
-const formatValidationErrors = (errors: any[]) => {
+const formatValidationErrors = (errors: ValidationError[]) => {
   return errors.reduce(
     (acc, error) => {
       const property = error.property;
@@ -47,7 +48,11 @@ export class StellarContractController {
       message: "Too many payment requests, please try again later",
       standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
       legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-      keyGenerator: (req) => getClientIp(req),
+       keyGenerator: (req) => {
+    const ip = getClientIp(req);
+    // If request is authenticated with a merchant, use merchantId  IP
+    return req.merchant ? `${req.merchant.id}:${ip}` : ip;
+  },
     });
   }
 
@@ -163,9 +168,17 @@ export class StellarContractController {
         );
       }
 
-      // Check payment order expiration
-      if (paymentData.paymentOrder.expiration < Math.floor(Date.now() / 1000)) {
+      // Check payment order expiration with a small buffer (5 seconds) to account for clock differences
+      const currentTime = Math.floor(Date.now() / 1000);
+      const buffer = 5; // 5 seconds buffer
+
+      if (paymentData.paymentOrder.expiration < currentTime - buffer) {
         throw new AppError("Payment order expired", 400);
+      }
+
+      // Log warning for pending expiration
+      if (paymentData.paymentOrder.expiration < currentTime + 60) {
+        logger.warn(`Payment order ${paymentData.paymentOrder.orderId} expires soon`);
       }
 
       const transactionHash =
@@ -175,6 +188,10 @@ export class StellarContractController {
         message: "Payment processed successfully",
         transactionHash,
         orderId: paymentData.paymentOrder.orderId,
+          timestamp: Math.floor(Date.now() / 1000),
+  status: "confirmed",
+  amount: paymentData.paymentOrder.amount,
+  tokenAddress: paymentData.paymentOrder.tokenAddress
       });
     } catch (error) {
       logger.error("Payment processing failed:", error);
