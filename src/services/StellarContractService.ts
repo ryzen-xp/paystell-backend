@@ -141,6 +141,12 @@ transaction.sign(StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET
         )
         .setTimeout(TimeoutInfinite)
         .build();
+        (
+          // Sign with the contract admin or merchant key
+          (transaction.sign(
+            StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET),
+          ))
+        );
 
       const response = await this.server.submitTransaction(transaction);
 
@@ -215,6 +221,10 @@ transaction.sign(StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET
       }
 
       const transaction = txBuilder.build();
+      // Sign with the contract admin or merchant key
+      transaction.sign(
+        StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET),
+      );
       const response = await this.server.submitTransaction(transaction);
 
       if (response.successful) {
