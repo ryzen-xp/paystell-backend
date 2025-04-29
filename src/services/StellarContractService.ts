@@ -24,22 +24,24 @@ export class StellarContractService {
   private server: InstanceType<typeof Server>;
   private contract: InstanceType<typeof Contract>;
   private contractId: string;
+  private networkPassphrase: string;
   private redis: Redis;
 
-  constructor(
-    options?: {
-      server?: InstanceType<typeof Server>;
-      redis?: Redis;
-      contractId?: string;
-    }
-  ) {
-      this.server = options?.server || new Server(
-      process.env.STELLAR_HORIZON_URL || "https://horizon-testnet.stellar.org",
-    );
-     this.contractId = process.env.STELLAR_CONTRACT_ID;
+  constructor(options?: {
+    server?: InstanceType<typeof Server>;
+    redis?: Redis;
+    contractId?: string;
+  }) {
+    this.server =
+      options?.server ||
+      new Server(
+        process.env.STELLAR_HORIZON_URL ||
+          "https://horizon-testnet.stellar.org",
+      );
+    this.contractId = process.env.STELLAR_CONTRACT_ID;
     if (!this.contractId) {
       throw new AppError("STELLAR_CONTRACT_ID is not configured", 500);
-   }
+    }
 
     this.contract = new Contract(this.contractId);
     this.networkPassphrase =
@@ -56,19 +58,19 @@ export class StellarContractService {
       },
     };
 
-      this.redis = options?.redis || (
-     process.env.REDIS_URL ? 
-      new Redis(process.env.REDIS_URL) : 
-      new Redis(redisOptions)
-    );
-     // Handle Redis connection events
-  this.redis.on('error', (error) => {
-    logger.error('Redis connection error:', error);
-  });
-  
-  this.redis.on('connect', () => {
-    logger.info('Connected to Redis');
-  });
+    this.redis =
+      options?.redis ||
+      (process.env.REDIS_URL
+        ? new Redis(process.env.REDIS_URL)
+        : new Redis(redisOptions));
+    // Handle Redis connection events
+    this.redis.on("error", (error) => {
+      logger.error("Redis connection error:", error);
+    });
+
+    this.redis.on("connect", () => {
+      logger.info("Connected to Redis");
+    });
   }
 
   /**
@@ -97,7 +99,7 @@ export class StellarContractService {
 
       const transaction = new TransactionBuilder(account, {
         fee: await this.server.fetchBaseFee(),
-        networkPassphrase: Networks.TESTNET,
+        networkPassphrase: this.networkPassphrase,
       })
         .addOperation(
           this.contract.call(
@@ -152,7 +154,7 @@ export class StellarContractService {
 
       const transaction = new TransactionBuilder(account, {
         fee: await this.server.fetchBaseFee(),
-        networkPassphrase: Networks.TESTNET,
+        networkPassphrase: this.networkPassphrase,
       })
         .addOperation(
           this.contract.call(
@@ -223,7 +225,7 @@ export class StellarContractService {
       // Build and submit transaction
       const txBuilder = new TransactionBuilder(account, {
         fee: await this.server.fetchBaseFee(),
-        networkPassphrase: Networks.TESTNET,
+        networkPassphrase: this.networkPassphrase,
       })
         .addOperation(
           this.contract.call(
@@ -249,7 +251,7 @@ export class StellarContractService {
 
       if (response.successful) {
         // Store used nonce with expiration
-        await this.redis.set(nonceKey, "1", "EX", 86400); // 24 hours expiration
+        await this.redis.setex(nonceKey, 86400, "1"); // 24 hours expiration
         return response.hash;
       }
 
