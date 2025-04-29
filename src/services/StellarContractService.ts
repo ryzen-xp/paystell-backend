@@ -26,12 +26,24 @@ export class StellarContractService {
   private contractId: string;
   private redis: Redis;
 
-  constructor() {
-    this.server = new Server(
+  constructor(
+    options?: {
+      server?: InstanceType<typeof Server>;
+      redis?: Redis;
+      contractId?: string;
+    }
+  ) {
+      this.server = options?.server || new Server(
       process.env.STELLAR_HORIZON_URL || "https://horizon-testnet.stellar.org",
     );
-    this.contractId = process.env.STELLAR_CONTRACT_ID || "";
+     this.contractId = process.env.STELLAR_CONTRACT_ID;
+    if (!this.contractId) {
+      throw new AppError("STELLAR_CONTRACT_ID is not configured", 500);
+   }
+
     this.contract = new Contract(this.contractId);
+    this.networkPassphrase =
+      process.env.STELLAR_NETWORK_PASSPHRASE || Networks.TESTNET;
 
     // Initialize Redis with proper configuration
     const redisOptions: RedisOptions = {
@@ -44,11 +56,19 @@ export class StellarContractService {
       },
     };
 
-    if (process.env.REDIS_URL) {
-      this.redis = new Redis(process.env.REDIS_URL);
-    } else {
-      this.redis = new Redis(redisOptions);
-    }
+      this.redis = options?.redis || (
+     process.env.REDIS_URL ? 
+      new Redis(process.env.REDIS_URL) : 
+      new Redis(redisOptions)
+    );
+     // Handle Redis connection events
+  this.redis.on('error', (error) => {
+    logger.error('Redis connection error:', error);
+  });
+  
+  this.redis.on('connect', () => {
+    logger.info('Connected to Redis');
+  });
   }
 
   /**
@@ -86,9 +106,11 @@ export class StellarContractService {
           ),
         )
         .setTimeout(TimeoutInfinite)
-   .build();
-// Sign with the contract admin or merchant key
-transaction.sign(StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET));
+        .build();
+      // Sign with the contract admin or merchant key
+      transaction.sign(
+        StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET),
+      );
 
       // Submit the transaction
       const response = await this.server.submitTransaction(transaction);
@@ -141,12 +163,10 @@ transaction.sign(StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET
         )
         .setTimeout(TimeoutInfinite)
         .build();
-        (
-          // Sign with the contract admin or merchant key
-          (transaction.sign(
-            StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET),
-          ))
-        );
+      // Sign with the contract admin or merchant key
+      transaction.sign(
+        StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET),
+      );
 
       const response = await this.server.submitTransaction(transaction);
 
@@ -209,7 +229,7 @@ transaction.sign(StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET
           this.contract.call(
             "process_payment_with_signature",
             xdr.ScVal.scvString(data.payerAddress),
-            xdr.ScVal.scvString(JSON.stringify(data.paymentOrder)),
+            xdr.ScVal.scvString(this.serializePaymentOrder(data.paymentOrder)),
             xdr.ScVal.scvString(data.signature),
             xdr.ScVal.scvString(data.merchantPublicKey),
           ),
@@ -246,7 +266,7 @@ transaction.sign(StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET
   /**
    * Get merchant details including supported tokens
    */
-  async getMerchantDetails(merchantAddress: string): Promise<any> {
+  async getMerchantDetails(merchantAddress: string): Promise<MerchantDetails> {
     try {
       const merchantData = await this.redis.hgetall(
         `merchant:${merchantAddress}`,
