@@ -186,18 +186,11 @@ export class StellarContractService {
       return false;
     } catch (error) {
       logger.error("Adding supported token failed:", error);
-       const err = error as {
-   response?: {
-     data?: { extras?: { result_codes?: { operations?: string[] } } };
-   };
- };
- 
- if (err.response?.data?.extras?.result_codes?.operations) {
-   throw new AppError(`Failed to add supported token: ${err.response.data.extras.result_codes.operations[0]}`, 500);
- }
- 
- throw new AppError("Failed to add supported token", 500);
-    }
+    const operationResult = error.response?.data?.extras?.result_codes?.operations?.[0];
+  if (operationResult) {
+    throw new AppError(`Failed to add supported token: ${operationResult}`, 500);
+  }
+  throw new AppError("Failed to add supported token", 500);    }
   }
 
   /**
@@ -220,13 +213,10 @@ export class StellarContractService {
 
       // Check if nonce was already used
       const nonceKey = `nonce:${data.paymentOrder.merchantAddress}:${data.paymentOrder.nonce}`;
-     const nonceTimestamp = await this.redis.get(nonceKey);
- if (nonceTimestamp) {
-   // Optional: Check if the nonce has actually expired despite TTL
-   const expirationTime = parseInt(nonceTimestamp) + 86400000; // 24 hours in ms
-   if (Date.now() < expirationTime) {
-     throw new AppError("Nonce already used", 400);
-   }
+      const nonceData = await this.redis.get(nonceKey);
+     if (nonceData) {
+    // Nonce exists and TTL hasn't expired yet
+    throw new AppError("Nonce already used", 400);
       }
 
      // Check if merchant exists
@@ -271,16 +261,7 @@ export class StellarContractService {
 
       if (response.successful) {
         // Store used nonce with expiration
-       await this.redis.setex(
-   nonceKey, 
-  86400, 
-   JSON.stringify({
-     timestamp: Date.now(),
-     transactionHash: response.hash,
-     amount: data.paymentOrder.amount,
-    tokenAddress: data.paymentOrder.tokenAddress
-   })
-); // 24 hours expiration
+       await this.redis.setex(nonceKey, 86400, Date.now().toString()); // 24 hours expiration
         return response.hash;
       }
 
