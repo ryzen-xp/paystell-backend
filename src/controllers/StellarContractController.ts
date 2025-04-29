@@ -48,11 +48,11 @@ export class StellarContractController {
       message: "Too many payment requests, please try again later",
       standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
       legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-       keyGenerator: (req) => {
-    const ip = getClientIp(req);
-    // If request is authenticated with a merchant, use merchantId  IP
-    return req.merchant ? `${req.merchant.id}:${ip}` : ip;
-  },
+      keyGenerator: (req) => {
+        const ip = getClientIp(req);
+        // If request is authenticated with a merchant, use merchantId + IP
+        return req.merchant ? `${req.merchant.id}:${ip}` : ip;
+      },
     });
   }
 
@@ -178,7 +178,9 @@ export class StellarContractController {
 
       // Log warning for pending expiration
       if (paymentData.paymentOrder.expiration < currentTime + 60) {
-        logger.warn(`Payment order ${paymentData.paymentOrder.orderId} expires soon`);
+        logger.warn(
+          `Payment order ${paymentData.paymentOrder.orderId} expires soon`,
+        );
       }
 
       const transactionHash =
@@ -188,10 +190,10 @@ export class StellarContractController {
         message: "Payment processed successfully",
         transactionHash,
         orderId: paymentData.paymentOrder.orderId,
-          timestamp: Math.floor(Date.now() / 1000),
-  status: "confirmed",
-  amount: paymentData.paymentOrder.amount,
-  tokenAddress: paymentData.paymentOrder.tokenAddress
+        timestamp: Math.floor(Date.now() / 1000),
+        status: "confirmed",
+        amount: paymentData.paymentOrder.amount,
+        tokenAddress: paymentData.paymentOrder.tokenAddress,
       });
     } catch (error) {
       logger.error("Payment processing failed:", error);

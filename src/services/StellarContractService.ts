@@ -26,6 +26,7 @@ export class StellarContractService {
   private contractId: string;
   private networkPassphrase: string;
   private redis: Redis;
+  private adminKeypair: StellarSdk.Keypair;
 
   constructor(options?: {
     server?: InstanceType<typeof Server>;
@@ -54,7 +55,7 @@ export class StellarContractService {
       password: process.env.REDIS_PASSWORD,
       username: process.env.REDIS_USERNAME,
       retryStrategy: (times: number) => {
-        return Math.min(times * 50, 2000);
+        return Math.min(Math.pow(2, times) * 50, 2000);
       },
     };
 
@@ -72,11 +73,12 @@ export class StellarContractService {
       logger.info("Connected to Redis");
     });
 
-   if (!process.env.CONTRACT_ADMIN_SECRET) {
-   throw new AppError("CONTRACT_ADMIN_SECRET is not configured", 500);
- }
-  this.adminKeypair = StellarSdk.Keypair.fromSecret(process.env.CONTRACT_ADMIN_SECRET);
-
+    if (!process.env.CONTRACT_ADMIN_SECRET) {
+      throw new AppError("CONTRACT_ADMIN_SECRET is not configured", 500);
+    }
+    this.adminKeypair = StellarSdk.Keypair.fromSecret(
+      process.env.CONTRACT_ADMIN_SECRET,
+    );
   }
 
   /**
@@ -86,9 +88,7 @@ export class StellarContractService {
     try {
       // Verify contract exists and is deployed
       const account = await this.server.loadAccount(this.contractId);
-      if (!account) {
-        throw new AppError("Contract not found", 404);
-      }
+
       return account;
     } catch (error) {
       logger.error("Contract initialization failed:", error);
@@ -116,7 +116,7 @@ export class StellarContractService {
         .setTimeout(TimeoutInfinite)
         .build();
       // Sign with the contract admin or merchant key
-    transaction.sign(this.adminKeypair);
+      transaction.sign(this.adminKeypair);
 
       // Submit the transaction
       const response = await this.server.submitTransaction(transaction);
@@ -170,7 +170,7 @@ export class StellarContractService {
         .setTimeout(TimeoutInfinite)
         .build();
       // Sign with the contract admin or merchant key
-     transaction.sign(this.adminKeypair);
+      transaction.sign(this.adminKeypair);
 
       const response = await this.server.submitTransaction(transaction);
 
@@ -185,13 +185,7 @@ export class StellarContractService {
 
       return false;
     } catch (error) {
-      logger.error("Adding supported token failed:", error);
-    const operationResult = error.response?.data?.extras?.result_codes?.operations?.[0];
-  if (operationResult) {
-    throw new AppError(`Failed to add supported token: ${operationResult}`, 500);
-  }
-  throw new AppError("Failed to add supported token", 500);    }
-  }
+     retryStrategy: (times: number) =>  }
 
   /**
    * Process a payment with signature verification
@@ -214,16 +208,27 @@ export class StellarContractService {
       // Check if nonce was already used
       const nonceKey = `nonce:${data.paymentOrder.merchantAddress}:${data.paymentOrder.nonce}`;
       const nonceData = await this.redis.get(nonceKey);
-     if (nonceData) {
-    // Nonce exists and TTL hasn't expired yet
-    throw new AppError("Nonce already used", 400);
+      if (nonceData) {
+        // Nonce exists and TTL hasn't expired yet
+        throw new AppError("Nonce already used", 400);
       }
 
-     // Check if merchant exists
-    const merchantExists = await this.redis.exists(`merchant:${data.paymentOrder.merchantAddress}`);
-      if (!merchantExists) {
-      throw new AppError("Merchant not found", 404);
-    }
+    // Check if merchant exists using a pipeline for better performance
+  const pipeline = this.redis.pipeline();
+  pipeline.exists(`merchant:${data.paymentOrder.merchantAddress}`);
+  pipeline.sismember(
+    `merchant:${data.paymentOrder.merchantAddress}:tokens`,
+    data.paymentOrder.tokenAddress
+  );
+  const [merchantExistsResult, isTokenSupportedResult] = await pipeline.exec();
+  
+  if (!merchantExistsResult[1]) {
+    throw new AppError("Merchant not found", 404);
+  }
+  
+  if (!isTokenSupportedResult[1]) {
+    throw new AppError("Token not supported by merchant", 400);
+  }
 
       // Check token support
       const isTokenSupported = await this.redis.sismember(
@@ -256,12 +261,12 @@ export class StellarContractService {
 
       const transaction = txBuilder.build();
       // Sign with the contract admin or merchant key
-     transaction.sign(this.adminKeypair);
+      transaction.sign(this.adminKeypair);
       const response = await this.server.submitTransaction(transaction);
 
       if (response.successful) {
         // Store used nonce with expiration
-       await this.redis.setex(nonceKey, 86400, Date.now().toString()); // 24 hours expiration
+        await this.redis.setex(nonceKey, 86400, Date.now().toString()); // 24 hours expiration
         return response.hash;
       }
 
