@@ -9,46 +9,45 @@ import {
 } from "../dtos/StellarContractDTO";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
-import rateLimit, {
-  RateLimitRequestHandler,
-} from "express-rate-limit";
-import { RedisStore } from "rate-limit-redis";
-import { Redis, RedisOptions } from "ioredis";
+import rateLimit, { RateLimitRequestHandler } from "express-rate-limit";
+
+// Helper function to format validation errors
+const formatValidationErrors = (errors: any[]) => {
+  return errors.reduce(
+    (acc, error) => {
+      const property = error.property;
+      const constraints = error.constraints || {};
+      acc[property] = Object.values(constraints);
+      return acc;
+    },
+    {} as Record<string, unknown>,
+  );
+};
+
+// Helper function to get client IP
+const getClientIp = (req: Request): string => {
+  const forwardedFor = req.headers["x-forwarded-for"];
+  if (typeof forwardedFor === "string") {
+    return forwardedFor.split(",")[0].trim();
+  }
+  return req.ip || req.socket.remoteAddress || "unknown";
+};
 
 export class StellarContractController {
   private contractService: StellarContractService;
-  private redis: Redis;
   public paymentRateLimiter: RateLimitRequestHandler;
 
   constructor() {
     this.contractService = new StellarContractService();
 
-    // Initialize Redis with proper options
-    const redisOptions: RedisOptions = {
-      host: process.env.REDIS_HOST || "localhost",
-      port: parseInt(process.env.REDIS_PORT || "6379"),
-      password: process.env.REDIS_PASSWORD,
-      username: process.env.REDIS_USERNAME,
-    };
-
-    if (process.env.REDIS_URL) {
-      this.redis = new Redis(process.env.REDIS_URL);
-    } else {
-      this.redis = new Redis(redisOptions);
-    }
-
-    // Initialize rate limiter after Redis
+    // Initialize rate limiter
     this.paymentRateLimiter = rateLimit({
       windowMs: 15 * 60 * 1000, // 15 minutes
       max: 100, // Limit each merchant to 100 requests per windowMs
       message: "Too many payment requests, please try again later",
       standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
       legacyHeaders: false, // Disable the `X-RateLimit-*` headers
-      store: new RedisStore({
-        // @ts-expect-error - Known issue: the `call` function is not present in @types/ioredis
-        sendCommand: (...args: string[]) => this.redis.call(...args),
-        prefix: "rate-limit:payment:",
-      }),
+      keyGenerator: (req) => getClientIp(req),
     });
   }
 
@@ -60,15 +59,19 @@ export class StellarContractController {
     res: Response,
   ): Promise<Response> => {
     try {
-const merchantData = plainToInstance(MerchantRegistrationDTO, req.body, {
-  enableImplicitConversion: true,
-  excludeExtraneousValues: true, // strips unknown props
-});
+      const merchantData = plainToInstance(MerchantRegistrationDTO, req.body, {
+        enableImplicitConversion: true,
+        excludeExtraneousValues: true,
+      });
 
       // Validate DTO
       const errors = await validate(merchantData);
       if (errors.length > 0) {
-        throw new AppError("Validation failed", 400, errors);
+        throw new AppError(
+          "Validation failed",
+          400,
+          formatValidationErrors(errors),
+        );
       }
 
       const success = await this.contractService.registerMerchant(merchantData);
@@ -100,13 +103,19 @@ const merchantData = plainToInstance(MerchantRegistrationDTO, req.body, {
     res: Response,
   ): Promise<Response> => {
     try {
-      const tokenData = new TokenSupportDTO();
-      Object.assign(tokenData, req.body);
+      const tokenData = plainToInstance(TokenSupportDTO, req.body, {
+        enableImplicitConversion: true,
+        excludeExtraneousValues: true, // strips unknown props
+      });
 
       // Validate DTO
       const errors = await validate(tokenData);
       if (errors.length > 0) {
-        throw new AppError("Validation failed", 400, errors);
+        throw new AppError(
+          "Validation failed",
+          400,
+          formatValidationErrors(errors),
+        );
       }
 
       const success = await this.contractService.addSupportedToken(tokenData);
@@ -139,13 +148,19 @@ const merchantData = plainToInstance(MerchantRegistrationDTO, req.body, {
     res: Response,
   ): Promise<Response> => {
     try {
-      const paymentData = new PaymentProcessingDTO();
-      Object.assign(paymentData, req.body);
+      const paymentData = plainToInstance(PaymentProcessingDTO, req.body, {
+        enableImplicitConversion: true,
+        excludeExtraneousValues: true, // strips unknown props
+      });
 
       // Validate DTO
       const errors = await validate(paymentData);
       if (errors.length > 0) {
-        throw new AppError("Validation failed", 400, errors);
+        throw new AppError(
+          "Validation failed",
+          400,
+          formatValidationErrors(errors),
+        );
       }
 
       // Check payment order expiration

@@ -1,15 +1,12 @@
 // middleware/auth.ts
-import {
-  Request,
-  Response,
-  NextFunction,
-  RequestHandler,
-} from "express";
+import { Request, Response, NextFunction } from "express-serve-static-core";
+import { RequestHandler } from "express";
 import { MerchantAuthService } from "../services/merchant.service";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import { UserRole } from "../enums/UserRole";
 import { Merchant } from "../interfaces/webhook.interfaces";
+import { User } from "../entities/User";
 
 // Augment the Express Request type
 declare global {
@@ -33,7 +30,7 @@ type AsyncRequestHandler<T = unknown> = (
   req: Request,
   res: Response,
   next: NextFunction,
-)  => Promise<T>;
+) => Promise<T>;
 
 export const asyncHandler = (fn: AsyncRequestHandler): RequestHandler => {
   return (req, res, next) => {
@@ -62,33 +59,25 @@ export const authenticateMerchant = asyncHandler(
 
 export const authenticateStellarWebhook = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const token = req.query.token as string;
-      // Use your MerchantAuthService to find the merchant
-      if (!token) {
-        return res.status(401).json({
-          error: "No token provided",
-        });
-      }
+    const token = req.query.token as string;
 
-      if (token !== process.env.STELLAR_WEBHOOK_TOKEN) {
-        return res.status(401).json({
-          error: "Invalid token",
-        });
-      }
-
-      const ip = req.headers["x-forwarded-for"] as string;
-
-      if (ip !== process.env.STELLAR_WEBHOOK_IP) {
-        return res.status(401).json({
-          error: "Invalid IP address",
-        });
-      }
-      // Attach merchant to request object
-      return next();
-    } catch (error) {
-      console.error("Auth error:", error);
-      return res.status(500).json({ error: "Authentication failed" });
+    if (!token) {
+      throw new AppError("No token provided", 401);
     }
+
+    if (token !== process.env.STELLAR_WEBHOOK_TOKEN) {
+      throw new AppError("Invalid token", 401);
+    }
+
+    // Get the originating IP from the x-forwarded-for header
+    const forwardedFor = req.headers["x-forwarded-for"] as string;
+    const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
+
+    if (ip !== process.env.STELLAR_WEBHOOK_IP) {
+      throw new AppError("Invalid IP address", 401);
+    }
+
+    // Attach merchant to request object
+    next();
   },
 );
