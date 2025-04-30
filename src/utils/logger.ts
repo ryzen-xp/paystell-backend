@@ -25,7 +25,7 @@ const colors = {
 winston.addColors(colors);
 
 // Create format for console output
-const consoleFormat = winston.format.combine(
+const _consoleFormat = winston.format.combine(
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:ms" }),
   winston.format.colorize({ all: true }),
   winston.format.printf(
@@ -34,13 +34,13 @@ const consoleFormat = winston.format.combine(
 );
 
 // Create format for file output (JSON)
-const fileFormat = winston.format.combine(
+const _fileFormat = winston.format.combine(
   winston.format.timestamp({ format: "YYYY-MM-DD HH:mm:ss:ms" }),
   winston.format.json(),
 );
 
 // Determine log level based on environment
-const level = process.env.NODE_ENV === "production" ? "info" : "debug";
+const _level = process.env.NODE_ENV === "production" ? "info" : "debug";
 
 // Ensure logs directory exists _before_ transports are instantiated
 if (!fs.existsSync("logs")) {

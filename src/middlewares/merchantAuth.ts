@@ -6,11 +6,10 @@ import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import { UserRole } from "../enums/UserRole";
 import { Merchant } from "../interfaces/webhook.interfaces";
-import { User } from "../entities/User";
 
 // Extend the Express Request interface through module augmentation
 // This approach aligns with TypeScript best practices
-declare module 'express-serve-static-core' {
+declare module "express-serve-static-core" {
   interface Request {
     merchant?: Merchant;
     user?: {
@@ -73,7 +72,9 @@ export const authenticateStellarWebhook = asyncHandler(
     const ip = forwardedFor ? forwardedFor.split(",")[0].trim() : null;
 
     if (ip !== process.env.STELLAR_WEBHOOK_IP) {
-      logger.warn(`Webhook IP validation failed: received ${ip}, expected ${process.env.STELLAR_WEBHOOK_IP}`);
+      logger.warn(
+        `Webhook IP validation failed: received ${ip}, expected ${process.env.STELLAR_WEBHOOK_IP}`,
+      );
       throw new AppError("Invalid IP address", 401);
     }
 

@@ -185,7 +185,10 @@ export class StellarContractService {
 
       return false;
     } catch (error) {
-     retryStrategy: (times: number) =>  }
+      logger.error("Error adding supported token:", error);
+      throw new AppError("Failed to add token support", 500);
+    }
+  }
 
   /**
    * Process a payment with signature verification
@@ -213,22 +216,23 @@ export class StellarContractService {
         throw new AppError("Nonce already used", 400);
       }
 
-    // Check if merchant exists using a pipeline for better performance
-  const pipeline = this.redis.pipeline();
-  pipeline.exists(`merchant:${data.paymentOrder.merchantAddress}`);
-  pipeline.sismember(
-    `merchant:${data.paymentOrder.merchantAddress}:tokens`,
-    data.paymentOrder.tokenAddress
-  );
-  const [merchantExistsResult, isTokenSupportedResult] = await pipeline.exec();
-  
-  if (!merchantExistsResult[1]) {
-    throw new AppError("Merchant not found", 404);
-  }
-  
-  if (!isTokenSupportedResult[1]) {
-    throw new AppError("Token not supported by merchant", 400);
-  }
+      // Check if merchant exists using a pipeline for better performance
+      const pipeline = this.redis.pipeline();
+      pipeline.exists(`merchant:${data.paymentOrder.merchantAddress}`);
+      pipeline.sismember(
+        `merchant:${data.paymentOrder.merchantAddress}:tokens`,
+        data.paymentOrder.tokenAddress,
+      );
+      const [merchantExistsResult, isTokenSupportedResult] =
+        await pipeline.exec();
+
+      if (!merchantExistsResult[1]) {
+        throw new AppError("Merchant not found", 404);
+      }
+
+      if (!isTokenSupportedResult[1]) {
+        throw new AppError("Token not supported by merchant", 400);
+      }
 
       // Check token support
       const isTokenSupported = await this.redis.sismember(
