@@ -30,11 +30,22 @@ type AsyncRequestHandler<T = unknown> = (
   next: NextFunction,
 ) => Promise<T>;
 
+// Utility to wrap async route handlers
 export const asyncHandler = (fn: AsyncRequestHandler): RequestHandler => {
   return (req, res, next) => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
 };
+
+// Extending Express types
+import "express";
+declare module "express" {
+  interface Request {
+    merchant?: Merchant; // Making merchant optional
+    requestId?: string;
+  }
+}
+
 
 export const authenticateMerchant = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
