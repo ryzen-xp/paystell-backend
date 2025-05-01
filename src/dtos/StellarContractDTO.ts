@@ -6,11 +6,8 @@ import {
   IsOptional,
   IsEmail,
   ValidateNested,
-  
-  
 } from "class-validator";
 import { IsStellarAddress } from "../validators/IsStellarAddress";
-
 
 export class MerchantRegistrationDTO {
   @IsNotEmpty()
@@ -21,8 +18,8 @@ export class MerchantRegistrationDTO {
   @IsString()
   name: string;
 
-   @IsNotEmpty()
-   @IsEmail()
+  @IsNotEmpty()
+  @IsEmail()
   email: string;
 }
 
