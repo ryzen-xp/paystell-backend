@@ -46,7 +46,6 @@ declare module "express" {
   }
 }
 
-
 export const authenticateMerchant = asyncHandler(
   async (req: Request, res: Response, next: NextFunction) => {
     const apiKey = req.headers["x-api-key"] as string;
