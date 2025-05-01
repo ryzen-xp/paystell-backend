@@ -1,12 +1,10 @@
-import StellarSdk from "@stellar/stellar-sdk";
+import StellarSdk, { Keypair } from "@stellar/stellar-sdk";
 const {
   Server,
   TransactionBuilder,
-  Operation,
   Networks,
   Memo,
   xdr,
-  StrKey,
   TimeoutInfinite,
   Contract,
 } = StellarSdk;
@@ -15,10 +13,25 @@ import {
   MerchantRegistrationDTO,
   TokenSupportDTO,
   PaymentProcessingDTO,
+  PaymentOrderDTO,
 } from "../dtos/StellarContractDTO";
 import { AppError } from "../utils/AppError";
 import { validateSignature } from "../utils/validateSignature";
 import logger from "../utils/logger";
+
+interface PaymentOrder {
+  merchantAddress: string;
+  tokenAddress: string;
+  amount: string;
+  nonce: string;
+}
+
+interface MerchantDetails {
+  name: string;
+  email: string;
+  registeredAt: string;
+  supportedTokens: string[];
+}
 
 export class StellarContractService {
   private server: InstanceType<typeof Server>;
@@ -26,7 +39,7 @@ export class StellarContractService {
   private contractId: string;
   private networkPassphrase: string;
   private redis: Redis;
-  private adminKeypair: StellarSdk.Keypair;
+  private adminKeypair: Keypair;
 
   constructor(options?: {
     server?: InstanceType<typeof Server>;
@@ -39,10 +52,11 @@ export class StellarContractService {
         process.env.STELLAR_HORIZON_URL ||
           "https://horizon-testnet.stellar.org",
       );
-    this.contractId = process.env.STELLAR_CONTRACT_ID;
-    if (!this.contractId) {
+    const contractId = process.env.STELLAR_CONTRACT_ID;
+    if (!contractId) {
       throw new AppError("STELLAR_CONTRACT_ID is not configured", 500);
     }
+    this.contractId = contractId;
 
     this.contract = new Contract(this.contractId);
     this.networkPassphrase =
@@ -223,8 +237,11 @@ export class StellarContractService {
         `merchant:${data.paymentOrder.merchantAddress}:tokens`,
         data.paymentOrder.tokenAddress,
       );
-      const [merchantExistsResult, isTokenSupportedResult] =
-        await pipeline.exec();
+      const results = await pipeline.exec();
+      if (!results) {
+        throw new AppError("Failed to check merchant status", 500);
+      }
+      const [merchantExistsResult, isTokenSupportedResult] = results;
 
       if (!merchantExistsResult[1]) {
         throw new AppError("Merchant not found", 404);
@@ -301,12 +318,18 @@ export class StellarContractService {
       );
 
       return {
-        ...merchantData,
+        name: merchantData.name,
+        email: merchantData.email,
+        registeredAt: merchantData.registeredAt,
         supportedTokens,
       };
     } catch (error) {
       logger.error("Failed to get merchant details:", error);
       throw new AppError("Failed to get merchant details", 500);
     }
+  }
+
+  private serializePaymentOrder(paymentOrder: PaymentOrderDTO): string {
+    return JSON.stringify(paymentOrder);
   }
 }
