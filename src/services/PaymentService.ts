@@ -12,6 +12,7 @@ import { generatePaymentId } from "../utils/generatePaymentId";
 import { generateSignature } from "../utils/signatureUtils";
 import config from "../config/stellarConfig";
 import AppDataSource from "../config/db";
+import { AppError } from "../utils/AppError";
 
 dotenv.config();
 
@@ -24,7 +25,7 @@ export class PaymentService {
 
   async createPayment(paymentData: Partial<Payment>): Promise<Payment> {
     if (!paymentData.paymentLink) {
-      throw new Error("Payment link is required");
+      throw new AppError("Payment link is required", 400);
     }
 
     const payment = new Payment();
@@ -62,7 +63,7 @@ export class PaymentService {
   ): Promise<Payment> {
     const payment = await this.getPaymentById(paymentId);
     if (!payment) {
-      throw new Error("Payment not found");
+      throw new AppError("Payment not found", 404);
     }
     payment.status = status;
     return this.paymentRepository.save(payment);
