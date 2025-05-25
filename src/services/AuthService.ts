@@ -25,7 +25,8 @@ export class AuthService {
   constructor() {
     this.userRepository = AppDataSource.getRepository(User);
     this.JWT_SECRET = process.env.JWT_SECRET || "your-secret-key";
-    this.JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
+    this.JWT_REFRESH_SECRET =
+      process.env.JWT_REFRESH_SECRET || "your-refresh-secret-key";
   }
 
   private generateTokenId(): string {
@@ -40,18 +41,36 @@ export class AuthService {
     const jti = this.generateTokenId();
     const expiresIn = 15 * 60;
 
-    const accessTokenOptions: SignOptions = { expiresIn: this.ACCESS_TOKEN_EXPIRY };
-    const refreshTokenOptions: SignOptions = { expiresIn: this.REFRESH_TOKEN_EXPIRY };
+    const accessTokenOptions: SignOptions = {
+      expiresIn: this.ACCESS_TOKEN_EXPIRY,
+    };
+    const refreshTokenOptions: SignOptions = {
+      expiresIn: this.REFRESH_TOKEN_EXPIRY,
+    };
 
-    const accessToken = sign({ id: userId, email, jti }, this.JWT_SECRET, accessTokenOptions);
-    const refreshToken = sign({ id: userId, email, jti }, this.JWT_REFRESH_SECRET, refreshTokenOptions);
+    const accessToken = sign(
+      { id: userId, email, jti },
+      this.JWT_SECRET,
+      accessTokenOptions,
+    );
+    const refreshToken = sign(
+      { id: userId, email, jti },
+      this.JWT_REFRESH_SECRET,
+      refreshTokenOptions,
+    );
 
     return { accessToken, refreshToken, expiresIn };
   }
 
-  private async storeRefreshToken(userId: number, jti: string, refreshToken: string): Promise<void> {
+  private async storeRefreshToken(
+    userId: number,
+    jti: string,
+    refreshToken: string,
+  ): Promise<void> {
     const tokenHash = this.hashToken(refreshToken);
-    await redisClient.set(`refresh_token:${userId}:${jti}`, tokenHash, { EX: 7 * 24 * 60 * 60 });
+    await redisClient.set(`refresh_token:${userId}:${jti}`, tokenHash, {
+      EX: 7 * 24 * 60 * 60,
+    });
   }
 
   private async blacklistToken(jti: string, expiresIn: number): Promise<void> {
@@ -64,7 +83,9 @@ export class AuthService {
   }
 
   async register(userData: UserRegistrationData): Promise<UserResponse> {
-    const userExists = await this.userRepository.findOne({ where: { email: userData.email } });
+    const userExists = await this.userRepository.findOne({
+      where: { email: userData.email },
+    });
     if (userExists) throw new Error("User with this email already exists");
 
     const user = this.userRepository.create(userData);
@@ -83,7 +104,9 @@ export class AuthService {
   }
 
   async findOrCreateAuth0User(auth0Profile: Auth0Profile): Promise<User> {
-    let user = await this.userRepository.findOne({ where: { email: auth0Profile.email } });
+    let user = await this.userRepository.findOne({
+      where: { email: auth0Profile.email },
+    });
 
     if (!user) {
       user = this.userRepository.create({
@@ -103,14 +126,20 @@ export class AuthService {
   }
 
   async login(email: string, password: string): Promise<LoginResponse> {
-    const user = await this.userRepository.findOne({ where: { email }, relations: ["twoFactorAuth"] });
+    const user = await this.userRepository.findOne({
+      where: { email },
+      relations: ["twoFactorAuth"],
+    });
     if (!user) throw new Error("Invalid credentials");
 
     const isValidPassword = await compare(password, user.password);
     if (!isValidPassword) throw new Error("Invalid credentials");
 
     const tokens = this.generateTokens(user.id, user.email);
-    const decoded = verify(tokens.refreshToken, this.JWT_REFRESH_SECRET) as JWTPayload;
+    const decoded = verify(
+      tokens.refreshToken,
+      this.JWT_REFRESH_SECRET,
+    ) as JWTPayload;
     await this.storeRefreshToken(user.id, decoded.jti!, tokens.refreshToken);
 
     return {
@@ -123,7 +152,9 @@ export class AuthService {
         isWalletVerified: user.isWalletVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
-        twoFactorAuth: user.twoFactorAuth ? { isEnabled: user.twoFactorAuth.isEnabled } : undefined,
+        twoFactorAuth: user.twoFactorAuth
+          ? { isEnabled: user.twoFactorAuth.isEnabled }
+          : undefined,
       },
       tokens,
     };
@@ -133,7 +164,10 @@ export class AuthService {
     const user = await this.findOrCreateAuth0User(auth0Profile);
 
     const tokens = this.generateTokens(user.id, user.email);
-    const decoded = verify(tokens.refreshToken, this.JWT_REFRESH_SECRET) as JWTPayload;
+    const decoded = verify(
+      tokens.refreshToken,
+      this.JWT_REFRESH_SECRET,
+    ) as JWTPayload;
     await this.storeRefreshToken(user.id, decoded.jti!, tokens.refreshToken);
 
     return {
@@ -146,7 +180,9 @@ export class AuthService {
         isWalletVerified: user.isWalletVerified,
         createdAt: user.createdAt,
         updatedAt: user.updatedAt,
-        twoFactorAuth: user.twoFactorAuth ? { isEnabled: user.twoFactorAuth.isEnabled } : undefined,
+        twoFactorAuth: user.twoFactorAuth
+          ? { isEnabled: user.twoFactorAuth.isEnabled }
+          : undefined,
       },
       tokens,
     };
@@ -154,18 +190,27 @@ export class AuthService {
 
   async refresh(refreshToken: string): Promise<TokenResponse> {
     try {
-      const decoded = verify(refreshToken, this.JWT_REFRESH_SECRET) as JWTPayload;
+      const decoded = verify(
+        refreshToken,
+        this.JWT_REFRESH_SECRET,
+      ) as JWTPayload;
 
       if (!decoded.jti) throw new Error("Invalid token format");
 
-      if (await this.isTokenBlacklisted(decoded.jti)) throw new Error("Token has been revoked");
+      if (await this.isTokenBlacklisted(decoded.jti))
+        throw new Error("Token has been revoked");
 
-      const user = await this.userRepository.findOne({ where: { id: decoded.id } });
+      const user = await this.userRepository.findOne({
+        where: { id: decoded.id },
+      });
       if (!user) throw new Error("User not found");
 
       const tokenHash = this.hashToken(refreshToken);
-      const storedHash = await redisClient.get(`refresh_token:${decoded.id}:${decoded.jti}`);
-      if (!storedHash || storedHash !== tokenHash) throw new Error("Invalid refresh token");
+      const storedHash = await redisClient.get(
+        `refresh_token:${decoded.id}:${decoded.jti}`,
+      );
+      if (!storedHash || storedHash !== tokenHash)
+        throw new Error("Invalid refresh token");
 
       await redisClient.del(`refresh_token:${decoded.id}:${decoded.jti}`);
 
@@ -175,8 +220,15 @@ export class AuthService {
       }
 
       const newTokens = this.generateTokens(user.id, user.email);
-      const newDecoded = verify(newTokens.refreshToken, this.JWT_REFRESH_SECRET) as JWTPayload;
-      await this.storeRefreshToken(user.id, newDecoded.jti!, newTokens.refreshToken);
+      const newDecoded = verify(
+        newTokens.refreshToken,
+        this.JWT_REFRESH_SECRET,
+      ) as JWTPayload;
+      await this.storeRefreshToken(
+        user.id,
+        newDecoded.jti!,
+        newTokens.refreshToken,
+      );
 
       return newTokens;
     } catch (error) {
@@ -186,7 +238,10 @@ export class AuthService {
 
   async logout(refreshToken: string): Promise<void> {
     try {
-      const decoded = verify(refreshToken, this.JWT_REFRESH_SECRET) as JWTPayload;
+      const decoded = verify(
+        refreshToken,
+        this.JWT_REFRESH_SECRET,
+      ) as JWTPayload;
 
       if (!decoded.jti) throw new Error("Invalid token format");
 

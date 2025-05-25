@@ -28,7 +28,7 @@ export class TokenService {
    */
   async addSupportedToken(
     merchantAddress: string,
-    tokenAddress: string
+    tokenAddress: string,
   ): Promise<boolean> {
     try {
       const tokenData: TokenSupportDTO = {
@@ -36,10 +36,13 @@ export class TokenService {
         tokenAddress,
       };
 
-      const success = await this.stellarContractService.addSupportedToken(tokenData);
-      
+      const success =
+        await this.stellarContractService.addSupportedToken(tokenData);
+
       if (success) {
-        logger.info(`Token ${tokenAddress} added for merchant ${merchantAddress}`);
+        logger.info(
+          `Token ${tokenAddress} added for merchant ${merchantAddress}`,
+        );
         return true;
       }
 
@@ -55,7 +58,8 @@ export class TokenService {
    */
   async getMerchantTokens(merchantAddress: string): Promise<string[]> {
     try {
-      const merchantDetails = await this.stellarContractService.getMerchantDetails(merchantAddress);
+      const merchantDetails =
+        await this.stellarContractService.getMerchantDetails(merchantAddress);
       return merchantDetails.supportedTokens || [];
     } catch (error) {
       logger.error("Error getting merchant tokens:", error);
@@ -68,7 +72,7 @@ export class TokenService {
    */
   async isTokenSupported(
     merchantAddress: string,
-    tokenAddress: string
+    tokenAddress: string,
   ): Promise<boolean> {
     try {
       const supportedTokens = await this.getMerchantTokens(merchantAddress);
@@ -87,7 +91,9 @@ export class TokenService {
       // This would require additional contract methods or caching
       // For now, we'll return an empty array as this functionality
       // would need to be implemented in the contract
-      logger.warn("getMerchantsForToken not fully implemented - requires contract enhancement");
+      logger.warn(
+        "getMerchantsForToken not fully implemented - requires contract enhancement",
+      );
       return [];
     } catch (error) {
       logger.error("Error getting merchants for token:", error);
@@ -125,4 +131,4 @@ export class TokenService {
       throw error;
     }
   }
-} 
+}

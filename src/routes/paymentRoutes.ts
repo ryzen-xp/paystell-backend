@@ -1,16 +1,16 @@
 import express, { RequestHandler } from "express";
 import { PaymentController } from "../controllers/PaymentController";
 import { handleValidationErrors } from "../middlewares/validationErrorHandler";
-import { 
-  paymentProcessingRateLimit, 
+import {
+  paymentProcessingRateLimit,
   paymentCreationRateLimit,
-  tokenOperationsRateLimit
+  tokenOperationsRateLimit,
 } from "../middlewares/paymentRateLimit";
-import { 
-  validatePayment, 
-  validatePaymentId, 
+import {
+  validatePayment,
+  validatePaymentId,
   validatePaymentStatus,
-  validateTransactionVerification
+  validateTransactionVerification,
 } from "../validators/paymentValidators";
 
 const router = express.Router();
@@ -62,7 +62,9 @@ router.put(
   validatePaymentId,
   validatePaymentStatus,
   handleValidationErrors,
-  paymentController.updatePaymentStatus.bind(paymentController) as RequestHandler,
+  paymentController.updatePaymentStatus.bind(
+    paymentController,
+  ) as RequestHandler,
 );
 
 /**

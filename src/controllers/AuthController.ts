@@ -19,7 +19,10 @@ export class AuthController {
       const user = await this.authService.register(req.body);
       res.status(201).json(user);
     } catch (error) {
-      res.status(400).json({ message: error instanceof Error ? error.message : "Internal server error" });
+      res.status(400).json({
+        message:
+          error instanceof Error ? error.message : "Internal server error",
+      });
     }
   };
 
@@ -62,11 +65,16 @@ export class AuthController {
           expiresIn: result.tokens.expiresIn,
         });
       } else {
-        res.status(403).json({ message: "2FA is enabled. Please use /login-2fa instead." });
+        res
+          .status(403)
+          .json({ message: "2FA is enabled. Please use /login-2fa instead." });
       }
     } catch (error) {
       console.error("Login error:", error);
-      res.status(401).json({ message: error instanceof Error ? error.message : "Internal server error" });
+      res.status(401).json({
+        message:
+          error instanceof Error ? error.message : "Internal server error",
+      });
     }
   };
 
@@ -92,7 +100,9 @@ export class AuthController {
       }
 
       if (!user.twoFactorAuth || !user.twoFactorAuth.isEnabled) {
-        res.status(400).json({ message: "2FA is not enabled for this account. Use /login instead." });
+        res.status(400).json({
+          message: "2FA is not enabled for this account. Use /login instead.",
+        });
         return;
       }
 
@@ -104,7 +114,9 @@ export class AuthController {
       try {
         await validateTwoFactorAuthentication(user.id, token);
       } catch (error) {
-        res.status(401).json({ message: error instanceof Error ? error.message : "Invalid 2FA token" });
+        res.status(401).json({
+          message: error instanceof Error ? error.message : "Invalid 2FA token",
+        });
         return;
       }
 
@@ -124,7 +136,10 @@ export class AuthController {
         expiresIn: result.tokens.expiresIn,
       });
     } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : "Internal server error" });
+      res.status(500).json({
+        message:
+          error instanceof Error ? error.message : "Internal server error",
+      });
     }
   };
 
@@ -150,11 +165,17 @@ export class AuthController {
       // Redirect to frontend with access token
       const redirectUrl = new URL("http://localhost:3000");
       redirectUrl.searchParams.append("accessToken", result.tokens.accessToken);
-      redirectUrl.searchParams.append("expiresIn", result.tokens.expiresIn.toString());
+      redirectUrl.searchParams.append(
+        "expiresIn",
+        result.tokens.expiresIn.toString(),
+      );
 
       res.redirect(redirectUrl.toString());
     } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : "Internal server error" });
+      res.status(500).json({
+        message:
+          error instanceof Error ? error.message : "Internal server error",
+      });
     }
   };
 
@@ -189,7 +210,10 @@ export class AuthController {
         path: "/",
       });
 
-      res.status(401).json({ message: error instanceof Error ? error.message : "Internal server error" });
+      res.status(401).json({
+        message:
+          error instanceof Error ? error.message : "Internal server error",
+      });
     }
   };
 
@@ -210,7 +234,10 @@ export class AuthController {
 
       res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
-      res.status(500).json({ message: error instanceof Error ? error.message : "Internal server error" });
+      res.status(500).json({
+        message:
+          error instanceof Error ? error.message : "Internal server error",
+      });
     }
   };
 }

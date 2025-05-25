@@ -5,15 +5,21 @@ import logger from "../utils/logger";
 export const handleValidationErrors = (
   req: Request,
   res: Response,
-  next: NextFunction
+  next: NextFunction,
 ): void => {
   const errors = validationResult(req);
-  
+
   if (!errors.isEmpty()) {
-    const errorMessages = errors.array().map(error => ({
-      field: error.type === 'field' ? (error as FieldValidationError).path : 'unknown',
+    const errorMessages = errors.array().map((error) => ({
+      field:
+        error.type === "field"
+          ? (error as FieldValidationError).path
+          : "unknown",
       message: error.msg,
-      value: error.type === 'field' ? (error as FieldValidationError).value : undefined,
+      value:
+        error.type === "field"
+          ? (error as FieldValidationError).value
+          : undefined,
     }));
 
     logger.warn("Validation errors:", {
@@ -33,4 +39,4 @@ export const handleValidationErrors = (
   }
 
   next();
-}; 
+};

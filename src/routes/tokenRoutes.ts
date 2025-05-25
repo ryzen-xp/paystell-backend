@@ -1,6 +1,9 @@
 import express from "express";
 import { TokenController } from "../controllers/TokenController";
-import { authenticateMerchant, asyncHandler } from "../middlewares/merchantAuth";
+import {
+  authenticateMerchant,
+  asyncHandler,
+} from "../middlewares/merchantAuth";
 import { handleValidationErrors } from "../middlewares/validationErrorHandler";
 import { tokenOperationsRateLimit } from "../middlewares/paymentRateLimit";
 import {
@@ -25,7 +28,7 @@ router.post(
   authenticateMerchant,
   validateAddTokenSupport,
   handleValidationErrors,
-  asyncHandler(tokenController.addSupportedToken)
+  asyncHandler(tokenController.addSupportedToken),
 );
 
 /**
@@ -37,7 +40,7 @@ router.get(
   "/merchant/:merchantAddress",
   validateMerchantParam,
   handleValidationErrors,
-  asyncHandler(tokenController.getMerchantTokens)
+  asyncHandler(tokenController.getMerchantTokens),
 );
 
 /**
@@ -49,7 +52,7 @@ router.get(
   "/support/:merchantAddress/:tokenAddress",
   validateTokenSupportParams,
   handleValidationErrors,
-  asyncHandler(tokenController.checkTokenSupport)
+  asyncHandler(tokenController.checkTokenSupport),
 );
 
 /**
@@ -61,7 +64,7 @@ router.get(
   "/info/:tokenAddress",
   validateTokenParam,
   handleValidationErrors,
-  asyncHandler(tokenController.getTokenInfo)
+  asyncHandler(tokenController.getTokenInfo),
 );
 
 /**
@@ -73,7 +76,7 @@ router.post(
   "/validate",
   validateTokenAddressBody,
   handleValidationErrors,
-  asyncHandler(tokenController.validateTokenAddress)
+  asyncHandler(tokenController.validateTokenAddress),
 );
 
-export default router; 
+export default router;

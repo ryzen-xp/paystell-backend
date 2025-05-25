@@ -22,7 +22,11 @@ export class UserController {
       const { password: _password, ...userWithoutPassword } = newUser;
 
       const _cacheKey = `user:${newUser.id}`;
-      await redisClient.setEx(_cacheKey, 600, JSON.stringify(userWithoutPassword));
+      await redisClient.setEx(
+        _cacheKey,
+        600,
+        JSON.stringify(userWithoutPassword),
+      );
 
       res.status(201).json(userWithoutPassword);
     } catch (error) {
@@ -51,7 +55,11 @@ export class UserController {
         const { password: _password, ...userWithoutPassword } = user;
 
         if (res.locals.cacheKey) {
-          await redisClient.setEx(res.locals.cacheKey, 600, JSON.stringify(userWithoutPassword));
+          await redisClient.setEx(
+            res.locals.cacheKey,
+            600,
+            JSON.stringify(userWithoutPassword),
+          );
         }
 
         res.status(200).json(userWithoutPassword);
@@ -78,7 +86,11 @@ export class UserController {
         }
 
         if (res.locals.cacheKey) {
-          await redisClient.setEx(res.locals.cacheKey, 600, JSON.stringify(users));
+          await redisClient.setEx(
+            res.locals.cacheKey,
+            600,
+            JSON.stringify(users),
+          );
         }
 
         res.status(200).json(users);
@@ -98,7 +110,11 @@ export class UserController {
       const { password: _password, ...userWithoutPassword } = updatedUser;
 
       const _cacheKey = `user:${userId}`;
-      await redisClient.setEx(_cacheKey, 600, JSON.stringify(userWithoutPassword));
+      await redisClient.setEx(
+        _cacheKey,
+        600,
+        JSON.stringify(userWithoutPassword),
+      );
 
       res.status(200).json(userWithoutPassword);
     } catch (error) {

@@ -19,7 +19,7 @@ export const paymentProcessingRateLimit = rateLimit({
       userAgent: req.get("User-Agent"),
       url: req.originalUrl,
     });
-    
+
     res.status(429).json({
       success: false,
       message: "Too many payment processing requests. Please try again later.",
@@ -45,7 +45,7 @@ export const paymentCreationRateLimit = rateLimit({
       userAgent: req.get("User-Agent"),
       url: req.originalUrl,
     });
-    
+
     res.status(429).json({
       success: false,
       message: "Too many payment creation requests. Please try again later.",
@@ -71,11 +71,11 @@ export const tokenOperationsRateLimit = rateLimit({
       userAgent: req.get("User-Agent"),
       url: req.originalUrl,
     });
-    
+
     res.status(429).json({
       success: false,
       message: "Too many token operation requests. Please try again later.",
       retryAfter: 60,
     });
   },
-}); 
+});

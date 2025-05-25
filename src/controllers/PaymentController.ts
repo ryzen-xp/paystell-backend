@@ -1,7 +1,10 @@
 import type { Request, Response, NextFunction } from "express";
 import { PaymentService } from "../services/PaymentService";
 import { TokenService } from "../services/TokenService";
-import { SignatureVerificationService, PaymentSignatureData } from "../services/SignatureVerificationService";
+import {
+  SignatureVerificationService,
+  PaymentSignatureData,
+} from "../services/SignatureVerificationService";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
 import { validationResult } from "express-validator";
@@ -48,15 +51,15 @@ export class PaymentController {
         return;
       }
 
-      const { 
-        payerAddress, 
-        merchantAddress, 
-        amount, 
-        tokenAddress, 
-        orderId, 
-        expiration, 
+      const {
+        payerAddress,
+        merchantAddress,
+        amount,
+        tokenAddress,
+        orderId,
+        expiration,
         nonce,
-        signature 
+        signature,
       } = req.body;
 
       // Validate signature if provided
@@ -71,11 +74,12 @@ export class PaymentController {
           nonce,
         };
 
-        const isSignatureValid = await this.signatureService.verifyPaymentSignature(
-          signatureData,
-          signature,
-          payerAddress
-        );
+        const isSignatureValid =
+          await this.signatureService.verifyPaymentSignature(
+            signatureData,
+            signature,
+            payerAddress,
+          );
 
         if (!isSignatureValid) {
           res.status(400).json({
@@ -114,7 +118,7 @@ export class PaymentController {
       // Validate token is supported by merchant
       const isTokenSupported = await this.tokenService.isTokenSupported(
         merchantAddress,
-        tokenAddress
+        tokenAddress,
       );
 
       if (!isTokenSupported) {
@@ -143,20 +147,20 @@ export class PaymentController {
         tokenAddress,
         orderId,
         expiration,
-        nonce
+        nonce,
       );
-      
+
       logger.info(`Payment processed successfully: ${orderId}`);
-      
-      res.status(200).json({ 
-        success: true, 
-        message: "Payment processed successfully", 
+
+      res.status(200).json({
+        success: true,
+        message: "Payment processed successfully",
         orderId,
-        result 
+        result,
       });
     } catch (error) {
       logger.error("Error processing payment:", error);
-      
+
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           success: false,
@@ -164,10 +168,11 @@ export class PaymentController {
           details: error.details,
         });
       } else {
-        const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
-        res.status(500).json({ 
-          success: false, 
-          message: errorMessage 
+        const errorMessage =
+          error instanceof Error ? error.message : "An unknown error occurred";
+        res.status(500).json({
+          success: false,
+          message: errorMessage,
         });
       }
     }
@@ -193,8 +198,9 @@ export class PaymentController {
       });
     } catch (error) {
       logger.error("Error getting payment:", error);
-      
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         message: errorMessage,
@@ -207,7 +213,10 @@ export class PaymentController {
       const { paymentId } = req.params;
       const { status } = req.body;
 
-      const payment = await this.paymentService.updatePaymentStatus(paymentId, status);
+      const payment = await this.paymentService.updatePaymentStatus(
+        paymentId,
+        status,
+      );
 
       res.status(200).json({
         success: true,
@@ -216,8 +225,9 @@ export class PaymentController {
       });
     } catch (error) {
       logger.error("Error updating payment status:", error);
-      
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         message: errorMessage,
@@ -230,13 +240,18 @@ export class PaymentController {
    */
   async verifyTransaction(req: Request, res: Response): Promise<void> {
     try {
-      const { transactionHash, expectedAmount, expectedDestination, expectedAsset } = req.body;
+      const {
+        transactionHash,
+        expectedAmount,
+        expectedDestination,
+        expectedAsset,
+      } = req.body;
 
       const isValid = await this.signatureService.verifyTransactionOnNetwork(
         transactionHash,
         expectedAmount,
         expectedDestination,
-        expectedAsset
+        expectedAsset,
       );
 
       res.status(200).json({
@@ -246,8 +261,9 @@ export class PaymentController {
       });
     } catch (error) {
       logger.error("Error verifying transaction:", error);
-      
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         message: errorMessage,
@@ -261,7 +277,7 @@ export class PaymentController {
   async generateNonce(req: Request, res: Response): Promise<void> {
     try {
       const nonce = this.signatureService.generateNonce();
-      
+
       res.status(200).json({
         success: true,
         nonce,
@@ -269,8 +285,9 @@ export class PaymentController {
       });
     } catch (error) {
       logger.error("Error generating nonce:", error);
-      
-      const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";
+
+      const errorMessage =
+        error instanceof Error ? error.message : "An unknown error occurred";
       res.status(500).json({
         success: false,
         message: errorMessage,

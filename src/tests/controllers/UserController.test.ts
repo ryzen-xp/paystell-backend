@@ -16,7 +16,8 @@ describe("UserController", () => {
     userService = new UserService() as jest.Mocked<UserService>;
     userController = new UserController();
     // Use type assertion to access private property for testing
-    (userController as unknown as { userService: UserService }).userService = userService;
+    (userController as unknown as { userService: UserService }).userService =
+      userService;
 
     req = {};
     res = {
@@ -29,7 +30,7 @@ describe("UserController", () => {
   it("should create a new user", async () => {
     const userData = {
       name: "Test",
-      email: "test@example.com", 
+      email: "test@example.com",
       password: "password123",
       role: UserRole.USER,
       logoUrl: "https://example.com/logo.png",
@@ -57,7 +58,8 @@ describe("UserController", () => {
 
     const mutableUser = { ...createdUser };
     // Use type assertion to delete password property
-    delete (mutableUser as Partial<typeof mutableUser> & { password?: string }).password;
+    delete (mutableUser as Partial<typeof mutableUser> & { password?: string })
+      .password;
 
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith(mutableUser);
@@ -90,7 +92,8 @@ describe("UserController", () => {
 
     const mutableUser = { ...user };
     // Use type assertion to delete password property
-    delete (mutableUser as Partial<typeof mutableUser> & { password?: string }).password;
+    delete (mutableUser as Partial<typeof mutableUser> & { password?: string })
+      .password;
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mutableUser);
@@ -128,7 +131,8 @@ describe("UserController", () => {
 
     const mutableUser = { ...updatedUser };
     // Use type assertion to delete password property
-    delete (mutableUser as Partial<typeof mutableUser> & { password?: string }).password;
+    delete (mutableUser as Partial<typeof mutableUser> & { password?: string })
+      .password;
 
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith(mutableUser);

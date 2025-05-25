@@ -9,7 +9,7 @@ export function generateSignature(
   tokenAddress: string,
   orderId: string,
   expiration: number,
-  nonce: string
+  nonce: string,
 ) {
   const data = `${payerAddress}${merchantAddress}${amount}${tokenAddress}${orderId}${expiration}${nonce}`;
   const secretKey = Buffer.from(config.STELLAR_SECRET_KEY, "hex");

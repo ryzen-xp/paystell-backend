@@ -20,7 +20,7 @@ export class TokenController {
 
       const success = await this.tokenService.addSupportedToken(
         merchantAddress,
-        tokenAddress
+        tokenAddress,
       );
 
       if (success) {
@@ -36,7 +36,7 @@ export class TokenController {
       }
     } catch (error) {
       logger.error("Error in addSupportedToken:", error);
-      
+
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           error: error.message,
@@ -67,7 +67,7 @@ export class TokenController {
       });
     } catch (error) {
       logger.error("Error in getMerchantTokens:", error);
-      
+
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           error: error.message,
@@ -90,7 +90,7 @@ export class TokenController {
 
       const isSupported = await this.tokenService.isTokenSupported(
         merchantAddress,
-        tokenAddress
+        tokenAddress,
       );
 
       res.status(200).json({
@@ -100,7 +100,7 @@ export class TokenController {
       });
     } catch (error) {
       logger.error("Error in checkTokenSupport:", error);
-      
+
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           error: error.message,
@@ -126,7 +126,7 @@ export class TokenController {
       res.status(200).json(tokenInfo);
     } catch (error) {
       logger.error("Error in getTokenInfo:", error);
-      
+
       if (error instanceof AppError) {
         res.status(error.statusCode).json({
           error: error.message,
@@ -160,4 +160,4 @@ export class TokenController {
       });
     }
   };
-} 
+}

@@ -7,43 +7,57 @@ export const validateAddTokenSupport = [
   body("merchantAddress")
     .isString()
     .matches(STELLAR_ADDRESS_REGEX)
-    .withMessage("Invalid merchant address format. Must be a valid Stellar address"),
-  
+    .withMessage(
+      "Invalid merchant address format. Must be a valid Stellar address",
+    ),
+
   body("tokenAddress")
     .isString()
     .matches(STELLAR_ADDRESS_REGEX)
-    .withMessage("Invalid token address format. Must be a valid Stellar address"),
+    .withMessage(
+      "Invalid token address format. Must be a valid Stellar address",
+    ),
 ];
 
 export const validateMerchantParam = [
   param("merchantAddress")
     .isString()
     .matches(STELLAR_ADDRESS_REGEX)
-    .withMessage("Invalid merchant address format. Must be a valid Stellar address"),
+    .withMessage(
+      "Invalid merchant address format. Must be a valid Stellar address",
+    ),
 ];
 
 export const validateTokenParam = [
   param("tokenAddress")
     .isString()
     .matches(STELLAR_ADDRESS_REGEX)
-    .withMessage("Invalid token address format. Must be a valid Stellar address"),
+    .withMessage(
+      "Invalid token address format. Must be a valid Stellar address",
+    ),
 ];
 
 export const validateTokenSupportParams = [
   param("merchantAddress")
     .isString()
     .matches(STELLAR_ADDRESS_REGEX)
-    .withMessage("Invalid merchant address format. Must be a valid Stellar address"),
-  
+    .withMessage(
+      "Invalid merchant address format. Must be a valid Stellar address",
+    ),
+
   param("tokenAddress")
     .isString()
     .matches(STELLAR_ADDRESS_REGEX)
-    .withMessage("Invalid token address format. Must be a valid Stellar address"),
+    .withMessage(
+      "Invalid token address format. Must be a valid Stellar address",
+    ),
 ];
 
 export const validateTokenAddressBody = [
   body("tokenAddress")
     .isString()
     .matches(STELLAR_ADDRESS_REGEX)
-    .withMessage("Invalid token address format. Must be a valid Stellar address"),
-]; 
+    .withMessage(
+      "Invalid token address format. Must be a valid Stellar address",
+    ),
+];
