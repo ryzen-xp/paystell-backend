@@ -328,7 +328,10 @@ export class StellarContractService {
     }
   }
 
-  private serializePaymentOrder(paymentOrder: PaymentOrderDTO): string {
+  /**
+   * Serialize payment order using the PaymentOrder interface
+   */
+  private serializePaymentOrder(paymentOrder: PaymentOrderDTO | PaymentOrder): string {
     return JSON.stringify(paymentOrder);
   }
 }
