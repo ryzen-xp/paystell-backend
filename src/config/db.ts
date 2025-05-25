@@ -22,6 +22,7 @@ const AppDataSource = new DataSource({
   database: process.env.POSTGRES_DATABASE,
   synchronize: true,
   dropSchema: false,
+  ssl: false,
   logging: true,
   entities: [
     User,
