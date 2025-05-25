@@ -90,31 +90,6 @@ export class PaymentController {
         }
       }
 
-      // Validate Stellar addresses
-      if (!this.signatureService.validateStellarAddress(payerAddress)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid payer address format",
-        });
-        return;
-      }
-
-      if (!this.signatureService.validateStellarAddress(merchantAddress)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid merchant address format",
-        });
-        return;
-      }
-
-      if (!this.signatureService.validateStellarAddress(tokenAddress)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid token address format",
-        });
-        return;
-      }
-
       // Validate token is supported by merchant
       const isTokenSupported = await this.tokenService.isTokenSupported(
         merchantAddress,
