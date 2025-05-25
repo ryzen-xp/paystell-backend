@@ -1,16 +1,20 @@
-import { BASE_FEE, Contract, xdr, TransactionBuilder } from "@stellar/stellar-sdk";
-import { Server } from "@stellar/stellar-sdk/lib/horizon";
+import { BASE_FEE, Contract, xdr, TransactionBuilder, Horizon } from "@stellar/stellar-sdk";
 import dotenv from "dotenv";
-import { getRepository } from "typeorm";
+import { Repository } from "typeorm";
 import { Payment } from "../entities/Payment";
 import { generatePaymentId } from "../utils/generatePaymentId";
 import { generateSignature } from "../utils/signatureUtils";
 import config from "src/config/stellarConfig";
+import AppDataSource from "../config/db";
 
 dotenv.config();
 
 export class PaymentService {
-  private paymentRepository = getRepository(Payment);
+  private paymentRepository: Repository<Payment>;
+
+  constructor() {
+    this.paymentRepository = AppDataSource.getRepository(Payment);
+  }
 
   async createPayment(paymentData: Partial<Payment>): Promise<Payment> {
     if (!paymentData.paymentLink) {
@@ -67,7 +71,7 @@ export class PaymentService {
     expiration: number,
     nonce: string
   ) {
-    const server = new Server(config.STELLAR_HORIZON_URL);
+    const server = new Horizon.Server(config.STELLAR_HORIZON_URL);
     const contract = new Contract(config.SOROBAN_CONTRACT_ID);
 
     // Generate Ed25519 signature
