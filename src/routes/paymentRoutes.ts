@@ -3,7 +3,8 @@ import { PaymentController } from "../controllers/PaymentController";
 import { handleValidationErrors } from "../middlewares/validationErrorHandler";
 import { 
   paymentProcessingRateLimit, 
-  paymentCreationRateLimit 
+  paymentCreationRateLimit,
+  tokenOperationsRateLimit
 } from "../middlewares/paymentRateLimit";
 import { 
   validatePayment, 
@@ -71,6 +72,7 @@ router.put(
  */
 router.post(
   "/verify-transaction",
+  paymentProcessingRateLimit,
   validateTransactionVerification,
   handleValidationErrors,
   paymentController.verifyTransaction.bind(paymentController) as RequestHandler,
@@ -83,6 +85,7 @@ router.post(
  */
 router.get(
   "/generate-nonce",
+  tokenOperationsRateLimit,
   paymentController.generateNonce.bind(paymentController) as RequestHandler,
 );
 
