@@ -70,15 +70,17 @@ export class SignatureVerificationService {
    * Create a standardized message for payment signing
    */
   private createPaymentMessage(data: PaymentSignatureData): string {
-    return [
-      `payer:${data.payerAddress}`,
-      `merchant:${data.merchantAddress}`,
-      `amount:${data.amount}`,
-      `token:${data.tokenAddress}`,
-      `order:${data.orderId}`,
-      `expiration:${data.expiration}`,
-      `nonce:${data.nonce}`,
-    ].join("|");
+    // Use JSON serialization with sorted keys for deterministic output
+    const messageObj = {
+      amount: data.amount,
+      expiration: data.expiration,
+      merchantAddress: data.merchantAddress,
+      nonce: data.nonce,
+      orderId: data.orderId,
+      payerAddress: data.payerAddress,
+      tokenAddress: data.tokenAddress,
+    };
+    return JSON.stringify(messageObj);
   }
 
   /**
