@@ -18,21 +18,6 @@ export class TokenController {
     try {
       const { merchantAddress, tokenAddress } = req.body;
 
-      if (!merchantAddress || !tokenAddress) {
-        res.status(400).json({
-          error: "merchantAddress and tokenAddress are required",
-        });
-        return;
-      }
-
-      // Validate token address format
-      if (!this.tokenService.validateTokenAddress(tokenAddress)) {
-        res.status(400).json({
-          error: "Invalid token address format",
-        });
-        return;
-      }
-
       const success = await this.tokenService.addSupportedToken(
         merchantAddress,
         tokenAddress
@@ -73,13 +58,6 @@ export class TokenController {
     try {
       const { merchantAddress } = req.params;
 
-      if (!merchantAddress) {
-        res.status(400).json({
-          error: "merchantAddress is required",
-        });
-        return;
-      }
-
       const tokens = await this.tokenService.getMerchantTokens(merchantAddress);
 
       res.status(200).json({
@@ -109,13 +87,6 @@ export class TokenController {
   checkTokenSupport = async (req: Request, res: Response): Promise<void> => {
     try {
       const { merchantAddress, tokenAddress } = req.params;
-
-      if (!merchantAddress || !tokenAddress) {
-        res.status(400).json({
-          error: "merchantAddress and tokenAddress are required",
-        });
-        return;
-      }
 
       const isSupported = await this.tokenService.isTokenSupported(
         merchantAddress,
@@ -150,13 +121,6 @@ export class TokenController {
     try {
       const { tokenAddress } = req.params;
 
-      if (!tokenAddress) {
-        res.status(400).json({
-          error: "tokenAddress is required",
-        });
-        return;
-      }
-
       const tokenInfo = await this.tokenService.getTokenInfo(tokenAddress);
 
       res.status(200).json(tokenInfo);
@@ -182,13 +146,6 @@ export class TokenController {
   validateTokenAddress = async (req: Request, res: Response): Promise<void> => {
     try {
       const { tokenAddress } = req.body;
-
-      if (!tokenAddress) {
-        res.status(400).json({
-          error: "tokenAddress is required",
-        });
-        return;
-      }
 
       const isValid = this.tokenService.validateTokenAddress(tokenAddress);
 

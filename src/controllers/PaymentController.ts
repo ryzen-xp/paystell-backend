@@ -177,14 +177,6 @@ export class PaymentController {
     try {
       const { paymentId } = req.params;
 
-      if (!paymentId) {
-        res.status(400).json({
-          success: false,
-          message: "Payment ID is required",
-        });
-        return;
-      }
-
       const payment = await this.paymentService.getPaymentById(paymentId);
 
       if (!payment) {
@@ -215,22 +207,6 @@ export class PaymentController {
       const { paymentId } = req.params;
       const { status } = req.body;
 
-      if (!paymentId || !status) {
-        res.status(400).json({
-          success: false,
-          message: "Payment ID and status are required",
-        });
-        return;
-      }
-
-      if (!["pending", "completed", "failed", "cancelled"].includes(status)) {
-        res.status(400).json({
-          success: false,
-          message: "Invalid status. Must be: pending, completed, failed, or cancelled",
-        });
-        return;
-      }
-
       const payment = await this.paymentService.updatePaymentStatus(paymentId, status);
 
       res.status(200).json({
@@ -255,14 +231,6 @@ export class PaymentController {
   async verifyTransaction(req: Request, res: Response): Promise<void> {
     try {
       const { transactionHash, expectedAmount, expectedDestination, expectedAsset } = req.body;
-
-      if (!transactionHash || !expectedAmount || !expectedDestination || !expectedAsset) {
-        res.status(400).json({
-          success: false,
-          message: "All fields are required: transactionHash, expectedAmount, expectedDestination, expectedAsset",
-        });
-        return;
-      }
 
       const isValid = await this.signatureService.verifyTransactionOnNetwork(
         transactionHash,
