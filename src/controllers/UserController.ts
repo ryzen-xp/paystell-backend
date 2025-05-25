@@ -19,7 +19,7 @@ export class UserController {
 
       const newUser: User = await this.userService.createUser(userData);
 
-      const { password, ...userWithoutPassword } = newUser;
+      const { password: _password, ...userWithoutPassword } = newUser;
 
       const _cacheKey = `user:${newUser.id}`;
       await redisClient.setEx(_cacheKey, 600, JSON.stringify(userWithoutPassword));
@@ -48,7 +48,7 @@ export class UserController {
           return;
         }
 
-        const { password, ...userWithoutPassword } = user;
+        const { password: _password, ...userWithoutPassword } = user;
 
         if (res.locals.cacheKey) {
           await redisClient.setEx(res.locals.cacheKey, 600, JSON.stringify(userWithoutPassword));
@@ -95,7 +95,7 @@ export class UserController {
 
       const updatedUser = await this.userService.updateUser(userId, updateData);
 
-      const { password, ...userWithoutPassword } = updatedUser;
+      const { password: _password, ...userWithoutPassword } = updatedUser;
 
       const _cacheKey = `user:${userId}`;
       await redisClient.setEx(_cacheKey, 600, JSON.stringify(userWithoutPassword));
