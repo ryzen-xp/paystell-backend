@@ -1,10 +1,16 @@
-import { BASE_FEE, Contract, xdr, TransactionBuilder, Horizon } from "@stellar/stellar-sdk";
+import {
+  BASE_FEE,
+  Contract,
+  xdr,
+  TransactionBuilder,
+  Horizon,
+} from "@stellar/stellar-sdk";
 import dotenv from "dotenv";
 import { Repository } from "typeorm";
 import { Payment } from "../entities/Payment";
 import { generatePaymentId } from "../utils/generatePaymentId";
 import { generateSignature } from "../utils/signatureUtils";
-import config from "src/config/stellarConfig";
+import config from "../config/stellarConfig";
 import AppDataSource from "../config/db";
 
 dotenv.config();
@@ -69,7 +75,7 @@ export class PaymentService {
     tokenAddress: string,
     orderId: string,
     expiration: number,
-    nonce: string
+    nonce: string,
   ) {
     const server = new Horizon.Server(config.STELLAR_HORIZON_URL);
     const contract = new Contract(config.SOROBAN_CONTRACT_ID);
@@ -82,10 +88,9 @@ export class PaymentService {
       tokenAddress,
       orderId,
       expiration,
-      nonce
+      nonce,
     );
 
-    
     const operation = contract.call(
       "process_payment_with_signature",
       xdr.ScVal.scvVec([
@@ -97,7 +102,7 @@ export class PaymentService {
         xdr.ScVal.scvI64(xdr.Int64.fromString(expiration.toString())),
         xdr.ScVal.scvString(nonce),
         xdr.ScVal.scvBytes(Buffer.from(signature, "hex")),
-      ])
+      ]),
     );
 
     const account = await server.loadAccount(payerAddress);
