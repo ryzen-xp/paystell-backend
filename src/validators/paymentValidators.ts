@@ -82,8 +82,8 @@ export const validatePaymentId = [
 
 export const validatePaymentStatus = [
   body("status")
-    .isIn(["pending", "completed", "failed", "cancelled"])
-    .withMessage("Status must be one of: pending, completed, failed, cancelled"),
+    .isIn(["pending", "completed", "failed"])
+    .withMessage("Status must be one of: pending, completed, failed"),
 ];
 
 export const validateTransactionVerification = [
