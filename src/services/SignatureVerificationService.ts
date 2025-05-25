@@ -2,6 +2,7 @@ import * as StellarSdk from "@stellar/stellar-sdk";
 import * as nacl from "tweetnacl";
 import { AppError } from "../utils/AppError";
 import logger from "../utils/logger";
+import config from "../config/stellarConfig";
 
 export interface PaymentSignatureData {
   payerAddress: string;
@@ -20,33 +21,46 @@ export class SignatureVerificationService {
   async verifyPaymentSignature(
     signatureData: PaymentSignatureData,
     signature: string,
-    publicKey: string
+    publicKey: string,
   ): Promise<boolean> {
     try {
+      // Validate inputs
+      if (!signature || !publicKey) {
+        throw new AppError("Missing signature or public key", 400);
+      }
+
+      if (!this.validateStellarAddress(publicKey)) {
+        throw new AppError("Invalid public key format", 400);
+      }
+
       // Create the message to verify
       const message = this.createPaymentMessage(signatureData);
-      
+
       // Convert signature from base64 to Uint8Array
       const signatureBytes = Buffer.from(signature, "base64");
-      
+
       // Convert public key from Stellar format to raw bytes
-      const publicKeyBytes = StellarSdk.StrKey.decodeEd25519PublicKey(publicKey);
-      
+      const publicKeyBytes =
+        StellarSdk.StrKey.decodeEd25519PublicKey(publicKey);
+
       // Verify the signature
       const isValid = nacl.sign.detached.verify(
         Buffer.from(message, "utf8"),
         signatureBytes,
-        publicKeyBytes
+        publicKeyBytes,
       );
-      
+
       logger.info("Signature verification result:", {
         orderId: signatureData.orderId,
         isValid,
         publicKey,
       });
-      
+
       return isValid;
     } catch (error) {
+      if (error instanceof AppError) {
+        throw error;
+      }
       logger.error("Error verifying signature:", error);
       throw new AppError("Failed to verify signature", 500);
     }
@@ -85,16 +99,19 @@ export class SignatureVerificationService {
     transactionHash: string,
     expectedAmount: string,
     expectedDestination: string,
-    expectedAsset: string
+    expectedAsset: string,
   ): Promise<boolean> {
     try {
-      // Initialize Stellar server (use testnet for development)
-      const server = new StellarSdk.Horizon.Server("https://horizon-testnet.stellar.org");
-      
+      // Initialize Stellar server from configuration
+      const server = new StellarSdk.Horizon.Server(config.STELLAR_HORIZON_URL);
+
       // Get transaction details
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const transaction: any = await server.transactions().transaction(transactionHash).call();
-      
+      const transaction: any = await server
+        .transactions()
+        .transaction(transactionHash)
+        .call();
+
       // Verify transaction was successful
       if (!transaction.successful) {
         logger.warn("Transaction was not successful:", { transactionHash });
@@ -103,24 +120,33 @@ export class SignatureVerificationService {
 
       // Get operations for this transaction
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const operations: any = await server.operations().forTransaction(transactionHash).call();
-      
+      const operations: any = await server
+        .operations()
+        .forTransaction(transactionHash)
+        .call();
+
       // Look for payment operation
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const paymentOp: any = operations.records.find(
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
-        (op: any) => op.type === "payment" || op.type === "path_payment_strict_receive"
+        (op: any) =>
+          op.type === "payment" || op.type === "path_payment_strict_receive",
       );
 
       if (!paymentOp) {
-        logger.warn("No payment operation found in transaction:", { transactionHash });
+        logger.warn("No payment operation found in transaction:", {
+          transactionHash,
+        });
         return false;
       }
 
       // Verify payment details
       const isAmountValid = paymentOp.amount === expectedAmount;
       const isDestinationValid = paymentOp.to === expectedDestination;
-      const assetCode = paymentOp.asset_type === "native" ? "XLM" : paymentOp.asset_code || "XLM";
+      const assetCode =
+        paymentOp.asset_type === "native"
+          ? "XLM"
+          : paymentOp.asset_code || "XLM";
       const isAssetValid = this.compareAssets(assetCode, expectedAsset);
 
       logger.info("Transaction verification details:", {
@@ -149,10 +175,13 @@ export class SignatureVerificationService {
    */
   private compareAssets(actual: string, expected: string): boolean {
     // Handle native Stellar Lumens
-    if ((actual === "XLM" || actual === "native") && (expected === "XLM" || expected === "native")) {
+    if (
+      (actual === "XLM" || actual === "native") &&
+      (expected === "XLM" || expected === "native")
+    ) {
       return true;
     }
-    
+
     return actual === expected;
   }
 
@@ -170,7 +199,7 @@ export class SignatureVerificationService {
   validateExpiration(expiration: number, bufferSeconds: number = 300): boolean {
     const currentTime = Math.floor(Date.now() / 1000);
     const expirationWithBuffer = expiration + bufferSeconds;
-    
+
     return currentTime <= expirationWithBuffer;
   }
-} 
+}
