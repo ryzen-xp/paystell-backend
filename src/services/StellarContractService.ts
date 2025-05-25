@@ -245,15 +245,6 @@ export class StellarContractService {
         throw new AppError("Token not supported by merchant", 400);
       }
 
-      // Check token support
-      const isTokenSupported = await this.redis.sismember(
-        `merchant:${data.paymentOrder.merchantAddress}:tokens`,
-        data.paymentOrder.tokenAddress,
-      );
-      if (!isTokenSupported) {
-        throw new AppError("Token not supported by merchant", 400);
-      }
-
       // Build and submit transaction
       const txBuilder = new TransactionBuilder(account, {
         fee: String(await this.server.fetchBaseFee()),
