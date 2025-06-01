@@ -4,7 +4,7 @@ services:
     container_name: paystell-backend
     ports:
       - "4000:4000"
-    env_file: .env
+    env_file: .env.docker
     depends_on:
       postgres:
         condition: service_healthy
