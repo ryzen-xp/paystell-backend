@@ -7,16 +7,16 @@ RUN apk add --no-cache netcat-openbsd python3 make g++
 
 COPY package*.json ./
 
-# Install all dependencies (including dev dependencies for build)
-RUN npm ci && npm rebuild
+# Install ALL dependencies (including devDependencies) to have TypeScript available
+RUN npm install
 
 COPY . .
 
-# Build the application
+# Build the TypeScript code
 RUN npm run build
 
-# Remove dev dependencies for production
-RUN npm ci --only=production && npm cache clean --force
+# Remove devDependencies after build to reduce image size
+RUN npm prune --production
 
 EXPOSE 4000
 
