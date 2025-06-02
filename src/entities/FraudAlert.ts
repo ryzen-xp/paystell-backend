@@ -53,7 +53,7 @@ import {
     status: FraudAlertStatus;
   
     @Column({ type: "jsonb" })
-    rulesTriggled: string[];
+    rulesTriggered: string[];
   
     @Column({ type: "jsonb", nullable: true })
     metadata: Record<string, unknown>;

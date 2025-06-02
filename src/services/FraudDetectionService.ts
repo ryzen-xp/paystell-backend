@@ -91,7 +91,7 @@ export class FraudDetectionService {
     };
 
     if (shouldBlock) {
-      this.createFraudAlert(transaction, result);
+      result.alert = await this.createFraudAlert(transaction, result);
     }
 
     return result;
@@ -132,8 +132,8 @@ export class FraudDetectionService {
     // Top triggered rules
     const ruleCount: { [key: string]: number } = {};
     alerts.forEach(alert => {
-      if (alert.rulesTriggled && Array.isArray(alert.rulesTriggled)) {
-        alert.rulesTriggled.forEach(rule => {
+      if (alert.rulesTriggered && Array.isArray(alert.rulesTriggered)) {
+        alert.rulesTriggered.forEach(rule => {
           ruleCount[rule] = (ruleCount[rule] || 0) + 1;
         });
       }
@@ -364,7 +364,7 @@ export class FraudDetectionService {
     alert.riskScore = result.riskScore;
     alert.riskLevel = result.riskLevel;
     alert.status = result.shouldBlock ? FraudAlertStatus.BLOCKED : FraudAlertStatus.PENDING;
-    alert.rulesTriggled = result.rulesTriggered;
+    alert.rulesTriggered = result.rulesTriggered;
     alert.metadata = transaction.metadata || {};
 
     return await this.fraudAlertRepo.save(alert);

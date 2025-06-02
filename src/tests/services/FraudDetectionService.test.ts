@@ -61,7 +61,7 @@ describe("FraudDetectionService", () => {
     riskScore: 0,
     riskLevel: RiskLevel.LOW,
     status: FraudAlertStatus.PENDING,
-    rulesTriggled: [],
+    rulesTriggered: [],
     metadata: {},
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -149,7 +149,7 @@ describe("FraudDetectionService", () => {
         riskScore: 50,
         riskLevel: RiskLevel.MEDIUM,
         status: FraudAlertStatus.PENDING,
-        rulesTriggled: ["AMOUNT_EXCEEDS_LIMIT"],
+        rulesTriggered: ["AMOUNT_EXCEEDS_LIMIT"],
       });
 
       mockMerchantConfigRepo.findOne.mockResolvedValue(config);
@@ -170,7 +170,7 @@ describe("FraudDetectionService", () => {
         riskScore: 100, // Capped at 100
         riskLevel: RiskLevel.CRITICAL,
         status: FraudAlertStatus.BLOCKED,
-        rulesTriggled: ["VELOCITY_HOURLY_EXCEEDED", "VELOCITY_DAILY_EXCEEDED", "DAILY_AMOUNT_LIMIT_EXCEEDED"],
+        rulesTriggered: ["VELOCITY_HOURLY_EXCEEDED", "VELOCITY_DAILY_EXCEEDED", "DAILY_AMOUNT_LIMIT_EXCEEDED"],
       });
 
       mockMerchantConfigRepo.findOne.mockResolvedValue(config);
@@ -370,7 +370,7 @@ describe("FraudDetectionService", () => {
         riskScore: fraudResult.riskScore,
         riskLevel: fraudResult.riskLevel,
         status: FraudAlertStatus.PENDING,
-        rulesTriggled: fraudResult.rulesTriggered,
+        rulesTriggered: fraudResult.rulesTriggered,
         metadata: transaction.metadata,
       };
 
@@ -516,14 +516,14 @@ describe("FraudDetectionService", () => {
           riskLevel: RiskLevel.HIGH, 
           status: FraudAlertStatus.BLOCKED,
           amount: 500,
-          rulesTriggled: ["AMOUNT_EXCEEDS_LIMIT", "VELOCITY_HOURLY_EXCEEDED"]
+          rulesTriggered: ["AMOUNT_EXCEEDS_LIMIT", "VELOCITY_HOURLY_EXCEEDED"]
         }),
         createMockAlert({ 
           riskScore: 45, 
           riskLevel: RiskLevel.MEDIUM, 
           status: FraudAlertStatus.PENDING,
           amount: 300,
-          rulesTriggled: ["SAME_AMOUNT_PATTERN"]
+          rulesTriggered: ["SAME_AMOUNT_PATTERN"]
         }),
       ];
 
