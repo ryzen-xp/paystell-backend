@@ -50,7 +50,7 @@ export const createRedisClient = () => {
     console.error("Redis client error:", err);
     // Don't throw, just log
   });
-  
+
   client.on("connect", () => console.log("Connected to Redis"));
 
   return client; // The user must call `client.connect()` manually
@@ -59,7 +59,7 @@ export const createRedisClient = () => {
 // Safe Redis operation wrapper
 export const safeRedisOperation = async <T>(
   operation: () => Promise<T>,
-  fallback?: T
+  fallback?: T,
 ): Promise<T | undefined> => {
   try {
     if (!redisClient.isOpen) {
