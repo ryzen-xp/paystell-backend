@@ -24,7 +24,6 @@ async function main() {
       }
       process.exit(1);
     });
-
   } catch (error) {
     console.error("❌ Failed to start the server:", error);
     process.exit(1); // Exit the process if the database fails to initialize
