@@ -4,41 +4,13 @@ import { Transaction, TransactionStatus } from "../entities/Transaction";
 import { FraudAlert, FraudAlertStatus, RiskLevel } from "../entities/FraudAlert";
 import { MerchantFraudConfig } from "../entities/MerchantFraudConfig";
 import { MerchantEntity } from "../entities/Merchant.entity";
-
-interface FraudCheckResult {
-  riskScore: number;
-  riskLevel: RiskLevel;
-  shouldBlock: boolean;
-  rulesTriggered: string[];
-  requiresReview: boolean;
-  alert?: FraudAlert;
-}
-
-interface TransactionContext {
-  transaction: Transaction;
-  userAgent?: string;
-  ipAddress?: string;
-  deviceFingerprint?: string;
-}
-
-interface FraudStats {
-  totalAlerts: number;
-  blockedTransactions: number;
-  pendingReviews: number;
-  averageRiskScore: number;
-  riskLevelBreakdown: {
-    low: number;
-    medium: number;
-    high: number;
-    critical: number;
-  };
-  topTriggeredRules: Array<{
-    rule: string;
-    count: number;
-  }>;
-  totalAmount: number;
-  blockedAmount: number;
-}
+import { 
+  FraudCheckResultDTO, 
+  TransactionContextDTO, 
+  FraudStatsDTO,
+  RiskLevelBreakdownDTO,
+  TopTriggeredRuleDTO
+} from "../dtos/FraudDetection.dto";
 
 export class FraudDetectionService {
   private transactionRepo: Repository<Transaction>;
@@ -53,7 +25,7 @@ export class FraudDetectionService {
     this.merchantRepo = AppDataSource.getRepository(MerchantEntity);
   }
 
-  async checkTransaction(context: TransactionContext): Promise<FraudCheckResult> {
+  async checkTransaction(context: TransactionContextDTO): Promise<FraudCheckResultDTO> {
     const { transaction } = context;
     const config = await this.getMerchantConfig(transaction.merchantId);
     
@@ -82,7 +54,7 @@ export class FraudDetectionService {
     const shouldBlock = this.shouldBlockTransaction(riskLevel, config);
     const requiresReview = shouldBlock;
 
-    const result: FraudCheckResult = {
+    const result: FraudCheckResultDTO = {
       riskScore: Math.min(riskScore, 100),
       riskLevel,
       shouldBlock,
@@ -97,7 +69,7 @@ export class FraudDetectionService {
     return result;
   }
 
-  async getFraudStats(merchantId?: string, days: number = 30): Promise<FraudStats> {
+  async getFraudStats(merchantId?: string, days: number = 30): Promise<FraudStatsDTO> {
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - days);
 
@@ -122,7 +94,7 @@ export class FraudDetectionService {
       : 0;
 
     // Risk level breakdown
-    const riskLevelBreakdown = {
+    const riskLevelBreakdown: RiskLevelBreakdownDTO = {
       low: alerts.filter(a => a.riskLevel === RiskLevel.LOW).length,
       medium: alerts.filter(a => a.riskLevel === RiskLevel.MEDIUM).length,
       high: alerts.filter(a => a.riskLevel === RiskLevel.HIGH).length,
@@ -139,7 +111,7 @@ export class FraudDetectionService {
       }
     });
 
-    const topTriggeredRules = Object.entries(ruleCount)
+    const topTriggeredRules: TopTriggeredRuleDTO[] = Object.entries(ruleCount)
       .map(([rule, count]) => ({ rule, count }))
       .sort((a, b) => b.count - a.count)
       .slice(0, 5);
@@ -354,7 +326,7 @@ export class FraudDetectionService {
 
   async createFraudAlert(
     transaction: Transaction,
-    result: FraudCheckResult
+    result: FraudCheckResultDTO
   ): Promise<FraudAlert> {
     const alert = new FraudAlert();
     alert.transactionId = transaction.id;

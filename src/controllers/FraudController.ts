@@ -1,6 +1,12 @@
 import { Request, Response } from "express";
+import { validate } from "class-validator";
+import { plainToClass } from "class-transformer";
 import { FraudDetectionService } from "../services/FraudDetectionService";
-import { FraudAlertStatus } from "../entities/FraudAlert";
+import { 
+  ReviewFraudAlertDTO, 
+  GetFraudAlertsQueryDTO, 
+  GetFraudStatsQueryDTO 
+} from "../dtos/FraudDetection.dto";
 
 export class FraudController {
   private fraudService: FraudDetectionService;
@@ -12,12 +18,26 @@ export class FraudController {
   // Get fraud alerts for a merchant or all
   getFraudAlerts = async (req: Request, res: Response) => {
     try {
-      const { merchantId, status, limit = 50 } = req.query;
+      const queryDto = plainToClass(GetFraudAlertsQueryDTO, req.query);
+      const errors = await validate(queryDto);
+
+      if (errors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Validation failed",
+          details: errors.map(error => ({
+            property: error.property,
+            constraints: error.constraints
+          }))
+        });
+      }
+
+      const { merchantId, status, limit = 50 } = queryDto;
       
       const alerts = await this.fraudService.getFraudAlerts(
-        merchantId as string,
-        status as FraudAlertStatus,
-        parseInt(limit as string)
+        merchantId,
+        status,
+        limit
       );
 
       res.json({
@@ -37,8 +57,22 @@ export class FraudController {
   // Review a fraud alert
   reviewFraudAlert = async (req: Request, res: Response) => {
     try {
+      const reviewDto = plainToClass(ReviewFraudAlertDTO, req.body);
+      const errors = await validate(reviewDto);
+
+      if (errors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Validation failed",
+          details: errors.map(error => ({
+            property: error.property,
+            constraints: error.constraints
+          }))
+        });
+      }
+
       const { alertId } = req.params;
-      const { status, reviewNotes } = req.body;
+      const { status, reviewNotes } = reviewDto;
       const reviewedBy = req.user?.id ? String(req.user.id) : "system";
 
       const alert = await this.fraudService.reviewFraudAlert(
@@ -104,12 +138,23 @@ export class FraudController {
   // Get fraud statistics
   getFraudStats = async (req: Request, res: Response) => {
     try {
-      const { merchantId, days = 30 } = req.query;
+      const statsDto = plainToClass(GetFraudStatsQueryDTO, req.query);
+      const errors = await validate(statsDto);
+
+      if (errors.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Validation failed",
+          details: errors.map(error => ({
+            property: error.property,
+            constraints: error.constraints
+          }))
+        });
+      }
+
+      const { merchantId, days = 30 } = statsDto;
       
-      const stats = await this.fraudService.getFraudStats(
-        merchantId as string,
-        parseInt(days as string)
-      );
+      const stats = await this.fraudService.getFraudStats(merchantId, days);
 
       res.json({
         success: true,

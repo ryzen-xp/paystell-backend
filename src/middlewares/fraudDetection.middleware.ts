@@ -1,15 +1,12 @@
 import { Request, Response, NextFunction } from "express";
+import { validate } from "class-validator";
+import { plainToClass } from "class-transformer";
 import { FraudDetectionService } from "../services/FraudDetectionService";
 import { Transaction } from "../entities/Transaction";
+import { TransactionContextDTO, FraudCheckResultDTO } from "../dtos/FraudDetection.dto";
 
 interface FraudRequest extends Request {
-  fraudCheck?: {
-    riskScore: number;
-    riskLevel: string;
-    shouldBlock: boolean;
-    requiresReview: boolean;
-    rulesTriggered: string[];
-  };
+  fraudCheck?: FraudCheckResultDTO;
 }
 
 export const fraudDetectionMiddleware = async (
@@ -33,12 +30,26 @@ export const fraudDetectionMiddleware = async (
     transaction.paymentMethod = req.body.paymentMethod;
     transaction.metadata = req.body.metadata || {};
 
-    const context = {
+    const contextData = {
       transaction,
       userAgent: req.get("User-Agent"),
       ipAddress: req.ip || req.connection.remoteAddress,
       deviceFingerprint: req.get("X-Device-Fingerprint"),
     };
+
+    const context = plainToClass(TransactionContextDTO, contextData);
+    const errors = await validate(context);
+
+    if (errors.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: "Invalid transaction context",
+        details: errors.map(error => ({
+          property: error.property,
+          constraints: error.constraints
+        }))
+      });
+    }
 
     const fraudResult = await fraudService.checkTransaction(context);
 
