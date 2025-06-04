@@ -18,6 +18,7 @@ export class MerchantAuthService {
   constructor() {
     this.dataSource = AppDataSource;
     this.merchantRepository = this.dataSource.getRepository(MerchantEntity);
+    this.fraudConfigRepository = this.dataSource.getRepository(MerchantFraudConfig);
   }
 
   async register(merchantData: CreateMerchantDTO): Promise<Merchant> {
@@ -46,6 +47,7 @@ export class MerchantAuthService {
       const merchant = this.merchantRepository.create(merchantData);
       const savedMerchant = await queryRunner.manager.save(merchant);
 
+      // Initialize default fraud configuration for new merchant
       await this.initializeDefaultFraudConfig(savedMerchant.id, queryRunner);
 
       await queryRunner.commitTransaction();
