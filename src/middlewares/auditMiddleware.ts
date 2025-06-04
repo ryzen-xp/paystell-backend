@@ -7,9 +7,15 @@ export const auditMiddleware = (
   res: Response,
   next: NextFunction,
 ): void => {
-  const context = AuditService.extractContextFromRequest(req);
+  try {
+    const context = AuditService.extractContextFromRequest(req);
 
-  auditContext.run(context, () => {
+    auditContext.run(context, () => {
+      next();
+    });
+  } catch (error) {
+    console.error("Failed to extract audit context:", error);
+    // Continue without audit context rather than blocking the request
     next();
-  });
+  }
 };

@@ -3,6 +3,16 @@ import { auditService } from "../services/AuditService";
 import { UserRole } from "../enums/UserRole";
 
 export class AuditController {
+  private parseDate(dateStr: string): Date | undefined {
+    const date = new Date(dateStr);
+    return isNaN(date.getTime()) ? undefined : date;
+  }
+
+  private parsePositiveInt(str: string, defaultValue: number): number {
+    const parsed = parseInt(str, 10);
+    return isNaN(parsed) || parsed < 1 ? defaultValue : parsed;
+  }
+
   async getAuditLogs(req: Request, res: Response): Promise<void> {
     try {
       // Only allow admin users to access audit logs
@@ -30,10 +40,10 @@ export class AuditController {
         entityId: entityId as string,
         userId: userId as string,
         action: action as string,
-        startDate: startDate ? new Date(startDate as string) : undefined,
-        endDate: endDate ? new Date(endDate as string) : undefined,
-        page: parseInt(page as string, 10),
-        limit: parseInt(limit as string, 10),
+        startDate: startDate ? this.parseDate(startDate as string) : undefined,
+        endDate: endDate ? this.parseDate(endDate as string) : undefined,
+        page: this.parsePositiveInt(page as string, 1),
+        limit: this.parsePositiveInt(limit as string, 50),
       };
 
       const result = await auditService.getAuditLogs(filters);
@@ -76,8 +86,8 @@ export class AuditController {
       const result = await auditService.getAuditLogs({
         entityType,
         entityId,
-        page: parseInt(page as string, 10),
-        limit: parseInt(limit as string, 10),
+        page: this.parsePositiveInt(page as string, 1),
+        limit: this.parsePositiveInt(limit as string, 50),
       });
 
       res.status(200).json({
