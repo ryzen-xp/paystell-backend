@@ -33,7 +33,7 @@ export const fraudDetectionMiddleware = async (
     const contextData = {
       transaction,
       userAgent: req.get("User-Agent"),
-      ipAddress: req.ip || req.connection.remoteAddress,
+      ipAddress: req.ip || req.socket.remoteAddress,
       deviceFingerprint: req.get("X-Device-Fingerprint"),
     };
 
