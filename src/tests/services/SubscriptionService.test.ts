@@ -5,6 +5,7 @@ import { SubscriptionEventType } from "../../entities/SubscriptionEvent";
 import { NotificationType, NotificationCategory } from "../../entities/InAppNotification.entity";
 import AppDataSource from "../../config/db";
 import { AppError } from "../../utils/AppError";
+import { LessThanOrEqual } from "typeorm";
 
 // Mock dependencies
 jest.mock("../../config/db");
@@ -210,12 +211,12 @@ describe("SubscriptionService", () => {
       expect(result).toEqual(mockSubscriptionData);
     });
 
-    it("should return null if subscription not found", async () => {
+    it("should throw AppError if subscription not found", async () => {
       mockSubscriptionRepository.findOne.mockResolvedValueOnce(null);
 
-      const result = await subscriptionService.getSubscription("non_existent");
-
-      expect(result).toBeNull();
+      await expect(
+        subscriptionService.getSubscription("non_existent")
+      ).rejects.toThrow(AppError);
     });
   });
 
@@ -340,6 +341,7 @@ describe("SubscriptionService", () => {
         intervalCount: 1,
         maxRetries: 3,
         failedPaymentCount: 0,
+        subscriptionId: "sub_abc123",
       },
       amount: 9.99,
       status: BillingCycleStatus.PENDING,
@@ -358,11 +360,19 @@ describe("SubscriptionService", () => {
       expect(mockBillingCycleRepository.find).toHaveBeenCalledWith({
         where: {
           status: BillingCycleStatus.PENDING,
-          dueDate: { $lte: expect.any(Date) },
+          dueDate: LessThanOrEqual(expect.any(Date)),
         },
         relations: ["subscription"],
       });
-      expect(mockPaymentService.processPayment).toHaveBeenCalled();
+      expect(mockPaymentService.processPayment).toHaveBeenCalledWith(
+        mockBillingCycle.subscription.customerId,
+        mockBillingCycle.subscription.merchantId,
+        mockBillingCycle.amount,
+        mockBillingCycle.subscription.tokenAddress,
+        `sub_${mockBillingCycle.id}`,
+        expect.any(Number), // expiration timestamp
+        expect.any(String) // payment ID
+      );
     });
 
     it("should handle payment success correctly", async () => {
@@ -426,6 +436,15 @@ describe("SubscriptionService", () => {
         })
       );
 
+      // Verify notification sent
+      expect(mockNotificationService.createNotification).toHaveBeenCalledWith({
+        title: "Payment Failed",
+        message: `Subscription payment failed after ${maxRetriedCycle.subscription.maxRetries} attempts`,
+        notificationType: NotificationType.MERCHANT,
+        category: NotificationCategory.ERROR,
+        recipientId: maxRetriedCycle.subscription.merchantId,
+        metadata: { subscriptionId: maxRetriedCycle.subscription.subscriptionId },
+      });
     });
 
     it("should handle empty billing cycles", async () => {

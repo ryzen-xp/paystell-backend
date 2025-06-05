@@ -1,4 +1,4 @@
-import { Repository } from "typeorm";
+import { Repository, LessThanOrEqual } from "typeorm";
 import AppDataSource from "../config/db";
 import { Subscription, SubscriptionStatus, BillingInterval } from "../entities/Subscription";
 import { BillingCycle, BillingCycleStatus } from "../entities/BillingCycle";
@@ -82,11 +82,17 @@ export class SubscriptionService {
     return savedSubscription;
   }
 
-  async getSubscription(subscriptionId: string): Promise<Subscription | null> {
-    return this.subscriptionRepository.findOne({
+  async getSubscription(subscriptionId: string): Promise<Subscription> {
+    const subscription = await this.subscriptionRepository.findOne({
       where: { subscriptionId },
       relations: ["merchant", "billingCycles", "events"],
     });
+
+    if (!subscription) {
+      throw new AppError("Subscription not found", 404);
+    }
+
+    return subscription;
   }
 
   async getSubscriptionsByMerchant(merchantId: string): Promise<Subscription[]> {
@@ -99,10 +105,7 @@ export class SubscriptionService {
 
   async pauseSubscription(subscriptionId: string): Promise<Subscription> {
     const subscription = await this.getSubscription(subscriptionId);
-    if (!subscription) {
-      throw new AppError("Subscription not found", 404);
-    }
-
+    
     subscription.status = SubscriptionStatus.PAUSED;
     const updated = await this.subscriptionRepository.save(subscription);
 
@@ -112,10 +115,7 @@ export class SubscriptionService {
 
   async resumeSubscription(subscriptionId: string): Promise<Subscription> {
     const subscription = await this.getSubscription(subscriptionId);
-    if (!subscription) {
-      throw new AppError("Subscription not found", 404);
-    }
-
+    
     subscription.status = SubscriptionStatus.ACTIVE;
     subscription.nextBillingDate = this.calculateNextBillingDate(
       new Date(),
@@ -130,10 +130,7 @@ export class SubscriptionService {
 
   async cancelSubscription(subscriptionId: string): Promise<Subscription> {
     const subscription = await this.getSubscription(subscriptionId);
-    if (!subscription) {
-      throw new AppError("Subscription not found", 404);
-    }
-
+    
     subscription.status = SubscriptionStatus.CANCELLED;
     subscription.endDate = new Date();
 
@@ -147,7 +144,7 @@ export class SubscriptionService {
     const dueBillingCycles = await this.billingCycleRepository.find({
       where: {
         status: BillingCycleStatus.PENDING,
-        dueDate: { $lte: now } as any,
+        dueDate: LessThanOrEqual(now),
       },
       relations: ["subscription"],
     });
