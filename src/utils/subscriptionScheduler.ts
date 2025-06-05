@@ -5,9 +5,10 @@ import { logInfo, logError } from "./logger";
 export class SubscriptionScheduler {
   private subscriptionService: SubscriptionService;
   private isRunning: boolean = false;
+  private cronTasks: any[] = [];
 
-  constructor() {
-    this.subscriptionService = new SubscriptionService();
+  constructor(subscriptionService?: SubscriptionService) {
+    this.subscriptionService = subscriptionService || new SubscriptionService();
   }
 
   start(): void {
@@ -16,12 +17,14 @@ export class SubscriptionScheduler {
       return;
     }
 
+    this.isRunning = true;
+
     // Run every 10 minutes
-    cron.schedule("*/10 * * * *", async () => {
+    const task = cron.schedule("*/10 * * * *", async () => {
       await this.processScheduledPayments();
     });
+    this.cronTasks.push(task);
 
-    this.isRunning = true;
     logInfo("Subscription scheduler started");
   }
 
@@ -30,9 +33,10 @@ export class SubscriptionScheduler {
       return;
     }
 
-    cron.getTasks().forEach((task) => {
+    this.cronTasks.forEach((task) => {
       task.stop();
     });
+    this.cronTasks = [];
 
     this.isRunning = false;
     logInfo("Subscription scheduler stopped");

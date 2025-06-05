@@ -2,7 +2,31 @@ import type { Request, Response, NextFunction } from "express";
 import { SubscriptionService } from "../services/SubscriptionService";
 import { BillingInterval } from "../entities/Subscription";
 import logger from "../utils/logger";
-import { validationResult } from "express-validator";
+import { z } from "zod";
+
+// Zod validation schemas
+const createSubscriptionSchema = z.object({
+  customerId: z.string().min(1, "Customer ID is required"),
+  customerEmail: z.string().email("Valid customer email is required"),
+  merchantId: z.string().min(1, "Merchant ID is required"),
+  amount: z.number().positive("Amount must be greater than 0"),
+  currency: z.string().min(1, "Currency is required"),
+  tokenAddress: z.string().min(1, "Token address is required"),
+  billingInterval: z.enum(["monthly", "yearly", "weekly", "custom"], {
+    errorMap: () => ({ message: "Invalid billing interval" })
+  }),
+  intervalCount: z.number().int().positive("Interval count must be positive").optional(),
+  startDate: z.string().datetime("Invalid start date format").optional(),
+  metadata: z.record(z.any()).optional(),
+});
+
+const subscriptionIdSchema = z.object({
+  subscriptionId: z.string().min(1, "Subscription ID is required"),
+});
+
+const merchantIdSchema = z.object({
+  merchantId: z.string().min(1, "Merchant ID is required"),
+});
 
 export class SubscriptionController {
   private subscriptionService: SubscriptionService;
@@ -17,54 +41,40 @@ export class SubscriptionController {
     next: NextFunction,
   ): Promise<void> {
     try {
-      // Validate request
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+      // Validate request using Zod
+      const validationResult = createSubscriptionSchema.safeParse({
+        ...req.body,
+        amount: parseFloat(req.body.amount),
+        intervalCount: req.body.intervalCount ? parseInt(req.body.intervalCount) : undefined,
+      });
+
+      if (!validationResult.success) {
         res.status(400).json({
           success: false,
           message: "Validation failed",
-          errors: errors.array(),
+          errors: validationResult.error.errors,
         });
         return;
       }
 
-      const {
-        customerId,
-        customerEmail,
-        merchantId,
-        amount,
-        currency,
-        tokenAddress,
-        billingInterval,
-        intervalCount,
-        startDate,
-        metadata,
-      } = req.body;
-
-      if (!merchantId) {
-        res.status(400).json({
-          success: false,
-          message: "Merchant ID is required",
-        });
-        return;
-      }
+      const data = validationResult.data;
 
       const subscription = await this.subscriptionService.createSubscription({
-        customerId,
-        customerEmail,
-        merchantId,
-        amount: parseFloat(amount),
-        currency,
-        tokenAddress,
-        billingInterval: billingInterval as BillingInterval,
-        intervalCount: intervalCount ? parseInt(intervalCount) : undefined,
-        startDate: startDate ? new Date(startDate) : undefined,
-        metadata,
+        customerId: data.customerId,
+        customerEmail: data.customerEmail,
+        merchantId: data.merchantId,
+        amount: data.amount,
+        currency: data.currency,
+        tokenAddress: data.tokenAddress,
+        billingInterval: data.billingInterval as BillingInterval,
+        intervalCount: data.intervalCount,
+        startDate: data.startDate ? new Date(data.startDate) : undefined,
+        metadata: data.metadata,
       });
 
       logger.info(`Subscription created: ${subscription.subscriptionId}`, {
         subscriptionId: subscription.subscriptionId,
-        merchantId,
+        merchantId: data.merchantId,
       });
 
       res.status(201).json({
@@ -79,27 +89,20 @@ export class SubscriptionController {
 
   async getSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Validate request
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+      // Validate request using Zod
+      const validationResult = subscriptionIdSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
         res.status(400).json({
           success: false,
           message: "Validation failed",
-          errors: errors.array(),
+          errors: validationResult.error.errors,
         });
         return;
       }
 
-      const { subscriptionId } = req.params;
+      const { subscriptionId } = validationResult.data;
       const subscription = await this.subscriptionService.getSubscription(subscriptionId);
-
-      if (!subscription) {
-        res.status(404).json({
-          success: false,
-          message: "Subscription not found",
-        });
-        return;
-      }
 
       res.status(200).json({
         success: true,
@@ -113,16 +116,19 @@ export class SubscriptionController {
 
   async getMerchantSubscriptions(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      const { merchantId } = req.query;
+      // Validate request using Zod
+      const validationResult = merchantIdSchema.safeParse(req.query);
 
-      if (!merchantId || typeof merchantId !== 'string') {
+      if (!validationResult.success) {
         res.status(400).json({
           success: false,
-          message: "Merchant ID is required as query parameter",
+          message: "Validation failed",
+          errors: validationResult.error.errors,
         });
         return;
       }
 
+      const { merchantId } = validationResult.data;
       const subscriptions = await this.subscriptionService.getSubscriptionsByMerchant(merchantId);
 
       res.status(200).json({
@@ -138,27 +144,20 @@ export class SubscriptionController {
 
   async pauseSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Validate request
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+      // Validate request using Zod
+      const validationResult = subscriptionIdSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
         res.status(400).json({
           success: false,
           message: "Validation failed",
-          errors: errors.array(),
+          errors: validationResult.error.errors,
         });
         return;
       }
 
-      const { subscriptionId } = req.params;
+      const { subscriptionId } = validationResult.data;
       const subscription = await this.subscriptionService.pauseSubscription(subscriptionId);
-
-      if (!subscription) {
-        res.status(404).json({
-          success: false,
-          message: "Subscription not found",
-        });
-        return;
-      }
 
       logger.info(`Subscription paused: ${subscriptionId}`);
 
@@ -175,27 +174,20 @@ export class SubscriptionController {
 
   async resumeSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Validate request
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+      // Validate request using Zod
+      const validationResult = subscriptionIdSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
         res.status(400).json({
           success: false,
           message: "Validation failed",
-          errors: errors.array(),
+          errors: validationResult.error.errors,
         });
         return;
       }
 
-      const { subscriptionId } = req.params;
+      const { subscriptionId } = validationResult.data;
       const subscription = await this.subscriptionService.resumeSubscription(subscriptionId);
-
-      if (!subscription) {
-        res.status(404).json({
-          success: false,
-          message: "Subscription not found",
-        });
-        return;
-      }
 
       logger.info(`Subscription resumed: ${subscriptionId}`);
 
@@ -212,27 +204,20 @@ export class SubscriptionController {
 
   async cancelSubscription(req: Request, res: Response, next: NextFunction): Promise<void> {
     try {
-      // Validate request
-      const errors = validationResult(req);
-      if (!errors.isEmpty()) {
+      // Validate request using Zod
+      const validationResult = subscriptionIdSchema.safeParse(req.params);
+
+      if (!validationResult.success) {
         res.status(400).json({
           success: false,
           message: "Validation failed",
-          errors: errors.array(),
+          errors: validationResult.error.errors,
         });
         return;
       }
 
-      const { subscriptionId } = req.params;
+      const { subscriptionId } = validationResult.data;
       const subscription = await this.subscriptionService.cancelSubscription(subscriptionId);
-
-      if (!subscription) {
-        res.status(404).json({
-          success: false,
-          message: "Subscription not found",
-        });
-        return;
-      }
 
       logger.info(`Subscription cancelled: ${subscriptionId}`);
 

@@ -32,6 +32,7 @@ import { requestLogger } from "./middlewares/requestLogger.middleware";
 // Service imports
 import RateLimitMonitoringService from "./services/rateLimitMonitoring.service";
 import { startExpiredSessionCleanupCronJobs } from "./utils/schedular";
+import { subscriptionScheduler } from "./utils/subscriptionScheduler";
 import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
@@ -81,6 +82,9 @@ app.use((req, res, next) => {
 
 // Start scheduled jobs
 startExpiredSessionCleanupCronJobs();
+
+// Start subscription scheduler
+subscriptionScheduler.start();
 
 // Log application startup
 logger.info("Application started successfully");
