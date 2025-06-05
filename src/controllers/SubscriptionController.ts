@@ -9,14 +9,14 @@ const createSubscriptionSchema = z.object({
   customerId: z.string().min(1, "Customer ID is required"),
   customerEmail: z.string().email("Valid customer email is required"),
   merchantId: z.string().min(1, "Merchant ID is required"),
-  amount: z.number().positive("Amount must be greater than 0"),
+  amount: z.string().transform((val) => parseFloat(val)).pipe(z.number().positive("Amount must be greater than 0")),
   currency: z.string().min(1, "Currency is required"),
   tokenAddress: z.string().min(1, "Token address is required"),
   billingInterval: z.enum(["monthly", "yearly", "weekly", "custom"], {
     errorMap: () => ({ message: "Invalid billing interval" })
   }),
-  intervalCount: z.number().int().positive("Interval count must be positive").optional(),
-  startDate: z.string().datetime("Invalid start date format").optional(),
+  intervalCount: z.string().transform((val) => parseInt(val)).pipe(z.number().int().positive("Interval count must be positive")).optional(),
+  startDate: z.string().datetime("Invalid start date format").transform((val) => new Date(val)).optional(),
   metadata: z.record(z.any()).optional(),
 });
 
@@ -42,11 +42,7 @@ export class SubscriptionController {
   ): Promise<void> {
     try {
       // Validate request using Zod
-      const validationResult = createSubscriptionSchema.safeParse({
-        ...req.body,
-        amount: parseFloat(req.body.amount),
-        intervalCount: req.body.intervalCount ? parseInt(req.body.intervalCount) : undefined,
-      });
+      const validationResult = createSubscriptionSchema.safeParse(req.body);
 
       if (!validationResult.success) {
         res.status(400).json({
@@ -59,15 +55,18 @@ export class SubscriptionController {
 
       const data = validationResult.data;
 
+      const amount = typeof data.amount === 'string' ? parseFloat(data.amount) : data.amount;
+      const intervalCount = data.intervalCount && typeof data.intervalCount === 'string' ? parseInt(data.intervalCount) : data.intervalCount;
+
       const subscription = await this.subscriptionService.createSubscription({
         customerId: data.customerId,
         customerEmail: data.customerEmail,
         merchantId: data.merchantId,
-        amount: data.amount,
+        amount: amount,
         currency: data.currency,
         tokenAddress: data.tokenAddress,
         billingInterval: data.billingInterval as BillingInterval,
-        intervalCount: data.intervalCount,
+        intervalCount: intervalCount,
         startDate: data.startDate ? new Date(data.startDate) : undefined,
         metadata: data.metadata,
       });
