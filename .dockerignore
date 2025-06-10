@@ -15,6 +15,7 @@ logs
 .prettierrc
 .prettierignore
 jest.config.js
+tsconfig.json
 CHANGELOG.md
 LICENSE
 docs 
