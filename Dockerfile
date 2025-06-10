@@ -7,8 +7,8 @@ RUN apk add --no-cache netcat-openbsd python3 make g++
 
 COPY package*.json ./
 
-# Install dependencies and rebuild native modules
-RUN npm ci --only=production && npm rebuild
+# Install ALL dependencies (including devDependencies) to have TypeScript available
+RUN npm install
 
 COPY . .
 
