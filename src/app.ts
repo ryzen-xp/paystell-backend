@@ -36,6 +36,7 @@ import { subscriptionScheduler } from "./utils/subscriptionScheduler";
 import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
+import routes from "./routes";
 
 // Initialize express app
 const app = express();
@@ -90,6 +91,9 @@ subscriptionScheduler.start();
 logger.info("Application started successfully");
 
 app.use(auth(oauthConfig));
+
+// Add audit middleware after auth middleware but before routes
+app.use(auditMiddleware);
 
 // Define routes
 app.use("/health", healthRouter);
