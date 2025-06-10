@@ -36,6 +36,7 @@ import { subscriptionScheduler } from "./utils/subscriptionScheduler";
 import logger from "./utils/logger";
 import { oauthConfig } from "./config/auth0Config";
 import { auth } from "express-openid-connect";
+import { auditMiddleware } from "./middlewares/auditMiddleware";
 import routes from "./routes";
 
 // Initialize express app
@@ -110,6 +111,7 @@ app.use("/api/v1/stellar", stellarContractRoutes);
 app.use("/token", tokenRoutes);
 app.use("/payment", paymentRouter);
 app.use("/subscriptions", subscriptionRouter);
+app.use("/", routes);
 
 // Error handling middleware
 const customErrorHandler: ErrorRequestHandler = (err, req, res, _next) => {
